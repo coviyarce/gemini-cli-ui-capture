@@ -1,9 +1,20 @@
 {
   "baseUrl": "http://localhost:5173",
   "screens": [
-    { "category": "Pages", "id": "workflows", "name": "Workflows Table", "tabIndex": 3, "selector": ".MuiPaper-root" },
-    { "category": "Pages", "id": "bulk-search", "name": "Bulk Search Page", "tabIndex": 0, "selector": "main" },
-    { "category": "Components", "id": "container-detail", "name": "Container Detail Card", "tabIndex": 1, "selector": ".MuiPaper-root" },
-    { "category": "Modals & Overlays", "id": "create-modal", "name": "Create Container Modal", "tabIndex": 2, "selector": ".MuiDialog-paper", "clickBefore": "button.MuiButton-contained", "waitFor": ".MuiDialog-paper" }
+    { 
+      "category": "Pages", 
+      "id": "main-dashboard", 
+      "name": "Main Dashboard", 
+      "tabIndex": 0, 
+      "selector": "main" 
+    },
+    { 
+      "category": "Modals & Overlays", 
+      "id": "sample-modal", 
+      "name": "Action Modal", 
+      "selector": ".modal-content", 
+      "clickBefore": ".open-modal-btn", 
+      "waitFor": ".modal-content" 
+    }
   ]
 }
