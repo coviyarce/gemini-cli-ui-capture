@@ -5,13 +5,17 @@
     body { font-family: 'Inter', sans-serif; padding: 16px; background: #ffffff; color: #333; margin: 0; }
     h2 { font-size: 14px; margin-bottom: 20px; color: #111; font-weight: 600; letter-spacing: -0.01em; }
     
+    .category-title {
+      font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase;
+      letter-spacing: 0.05em; margin: 16px 0 8px 0;
+    }
+
     .screen-item { 
       display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 0; border-bottom: 1px solid #eee;
+      padding: 10px 0; border-bottom: 1px solid #f0f0f0;
     }
     .screen-item:last-child { border-bottom: none; }
     
-    .screen-info { display: flex; flex-direction: column; gap: 2px; }
     .screen-name { font-size: 12px; font-weight: 500; color: #333; }
     
     /* Toggle Switch Style */
@@ -31,7 +35,7 @@
     input:checked + .slider { background-color: #00b4ed; }
     input:checked + .slider:before { transform: translateX(14px); }
 
-    .actions { margin-top: 24px; }
+    .actions { margin-top: 24px; position: sticky; bottom: 0; background: white; padding-top: 10px; }
     button { 
       width: 100%; padding: 12px; background: #111; color: white; border: none;
       border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
@@ -39,37 +43,50 @@
     }
     button:hover { background: #333; }
     
-    .footer { font-size: 10px; color: #aaa; text-align: center; margin-top: 20px; font-weight: 400; }
+    .footer { font-size: 10px; color: #aaa; text-align: center; margin-top: 20px; font-weight: 400; padding-bottom: 16px; }
   </style>
 </head>
 <body>
-  <h2>Import Screens</h2>
+  <h2>Import Screens & Elements</h2>
   <div id="screen-list"></div>
   <div class="actions">
     <button id="import-btn">Import Selected</button>
   </div>
   <div class="footer">
-    UI Sync Kit v2.0<br>
+    UI Sync Kit v2.1<br>
     by <a href="https://github.com/coviyarce/gemini-cli-ui-capture" target="_blank" style="color: #00b4ed; text-decoration: none;">Coviyarce</a>
   </div>
 
   <script>
-    const screens = __SCREEN_METADATA__;
+    const screens = [{"id":"workflows","name":"Workflows Table","category":"Pages"},{"id":"bulk-search","name":"Bulk Search Page","category":"Pages"},{"id":"container-detail","name":"Container Detail Card","category":"Components"},{"id":"create-modal","name":"Create Container Modal","category":"Modals & Overlays"}];
     const listDiv = document.getElementById('screen-list');
 
-    screens.forEach(screen => {
-      const div = document.createElement('div');
-      div.className = 'screen-item';
-      div.innerHTML = `
-        <div class="screen-info">
-          <span class="screen-name">${screen.name}</span>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="${screen.id}" value="${screen.id}" checked>
-          <span class="slider"></span>
-        </label>
-      `;
-      listDiv.appendChild(div);
+    // Group by category
+    const categories = {};
+    screens.forEach(s => {
+        const cat = s.category || 'Other';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(s);
+    });
+
+    Object.keys(categories).forEach(catName => {
+        const catHeader = document.createElement('div');
+        catHeader.className = 'category-title';
+        catHeader.innerText = catName;
+        listDiv.appendChild(catHeader);
+
+        categories[catName].forEach(screen => {
+            const div = document.createElement('div');
+            div.className = 'screen-item';
+            div.innerHTML = `
+                <span class="screen-name">${screen.name}</span>
+                <label class="switch">
+                <input type="checkbox" id="${screen.id}" value="${screen.id}" checked>
+                <span class="slider"></span>
+                </label>
+            `;
+            listDiv.appendChild(div);
+        });
     });
 
     document.getElementById('import-btn').onclick = () => {

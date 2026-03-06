@@ -16,9 +16,9 @@ let code = fs.readFileSync(templatePath, 'utf8');
 code = code.replace('__CAPTURED_DATA__', uiData);
 fs.writeFileSync(codePath, code);
 
-// 3. Update ui.html with screen metadata
+// 3. Update ui.html with screen metadata (including categories)
 let uiHtml = fs.readFileSync(uiTemplatePath, 'utf8');
-const screenMetadata = config.screens.map(s => ({ id: s.id, name: s.name }));
+const screenMetadata = config.screens.map(s => ({ id: s.id, name: s.name, category: s.category }));
 uiHtml = uiHtml.replace('__SCREEN_METADATA__', JSON.stringify(screenMetadata));
 fs.writeFileSync(uiTemplatePath, uiHtml);
 

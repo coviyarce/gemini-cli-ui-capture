@@ -2,7 +2,6 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
-// Load dynamic config
 const configPath = path.join(__dirname, '../capture-config.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
@@ -27,13 +26,28 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         await page.setViewport({ width: res.width, height: res.height });
         await page.goto(config.baseUrl, { waitUntil: 'networkidle2' });
         
-        // Navigate using Tab Index if provided
+        // 1. Navigate to Tab
         if (screen.tabIndex !== undefined) {
           const tabs = await page.$$('.MuiTab-root');
           if (tabs[screen.tabIndex]) {
             await tabs[screen.tabIndex].click();
-            await new Promise(r => setTimeout(r, 3000)); // Wait for transitions
+            await new Promise(r => setTimeout(r, 1000));
           }
+        }
+
+        // 2. Perform Pre-Capture Actions (like opening modals)
+        if (screen.clickBefore) {
+            try {
+                await page.waitForSelector(screen.clickBefore, { timeout: 5000 });
+                await page.click(screen.clickBefore);
+                await new Promise(r => setTimeout(r, 1000)); // Wait for modal animation
+            } catch (e) {
+                console.warn(`Could not perform clickBefore: ${screen.clickBefore}`);
+            }
+        }
+
+        if (screen.waitFor) {
+            try { await page.waitForSelector(screen.waitFor, { timeout: 5000 }); } catch (e) {}
         }
 
         screenResolutions[res.name] = await page.evaluate((selector) => {
@@ -89,6 +103,6 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
   } catch (err) { console.error(err); }
 
   fs.writeFileSync(path.join(__dirname, 'ui-structure.json'), JSON.stringify(allScreensResults, null, 2));
-  console.log('Multi-screen capture finished successfully!');
+  console.log('Capture finished.');
   await browser.close();
 })();
