@@ -1,20 +1,7 @@
 {
   "baseUrl": "http://localhost:5173",
   "screens": [
-    { 
-      "category": "Pages", 
-      "id": "main-dashboard", 
-      "name": "Main Dashboard", 
-      "tabIndex": 0, 
-      "selector": "main" 
-    },
-    { 
-      "category": "Modals & Overlays", 
-      "id": "sample-modal", 
-      "name": "Action Modal", 
-      "selector": ".modal-content", 
-      "clickBefore": ".open-modal-btn", 
-      "waitFor": ".modal-content" 
-    }
+    { "category": "Pages", "id": "dashboard", "name": "Main Dashboard", "selector": "main" },
+    { "category": "Modals", "id": "settings-modal", "name": "Settings Modal", "selector": ".modal-content", "clickBefore": ".settings-btn", "waitFor": ".modal-content" }
   ]
 }
