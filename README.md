@@ -6,6 +6,20 @@ Built specifically to bridge the gap in environments where the native Figma MCP 
 
 ---
 
+## 🖼 Visual Preview
+
+### High-Fidelity UI Capture
+The toolkit captures complex web interfaces with pixel-perfect accuracy, preserving the hierarchy, typography, and styling of systems like Polaris DS.
+
+![Web App Preview](assets/app-preview.png)
+
+### Modern Figma Plugin UI
+A sleek, toggle-based interface allows you to selectively import multiple screens and resolutions directly into your Figma workspace.
+
+<img src="assets/plugin-ui.png" width="300" alt="Plugin UI Preview">
+
+---
+
 ## ✨ Features & Evolution
 
 This tool evolved through rigorous iteration to achieve near-perfect design fidelity:

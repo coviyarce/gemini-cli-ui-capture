@@ -11,6 +11,6 @@
   "author": "coviyarce",
   "license": "MIT",
   "dependencies": {
-    "puppeteer": "^24.3.0"
+    "puppeteer": "^24.38.0"
   }
 }
