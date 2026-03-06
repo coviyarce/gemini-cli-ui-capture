@@ -1,0 +1,9 @@
+{
+  "baseUrl": "http://localhost:5173",
+  "screens": [
+    { "id": "workflows", "name": "Workflows Table", "tabIndex": 3, "selector": ".MuiPaper-root" },
+    { "id": "bulk-search", "name": "Bulk Search Page", "tabIndex": 0, "selector": "main" },
+    { "id": "container-detail", "name": "Container Detail Card", "tabIndex": 1, "selector": ".MuiPaper-root" },
+    { "id": "create-container", "name": "Create Container Modal", "tabIndex": 2, "selector": "main" }
+  ]
+}
