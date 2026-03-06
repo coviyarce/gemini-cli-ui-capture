@@ -1,0 +1,9 @@
+{
+  "name": "Polaris Sync Plugin",
+  "id": "polaris-sync-plugin-dev",
+  "api": "1.0.0",
+  "main": "code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"]
+}

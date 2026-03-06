@@ -1,0 +1,16 @@
+{
+  "name": "gemini-cli-ui-capture",
+  "version": "1.0.0",
+  "description": "High-fidelity UI capture toolkit for Figma via Gemini CLI",
+  "main": "index.js",
+  "scripts": {
+    "capture": "node scripts/capture-to-figma.cjs",
+    "update-plugin": "node scripts/update-plugin.cjs",
+    "sync": "node scripts/capture-to-figma.cjs && node scripts/update-plugin.cjs"
+  },
+  "author": "coviyarce",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^24.3.0"
+  }
+}
