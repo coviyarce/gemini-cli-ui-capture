@@ -1,8 +1,21 @@
 {
-  "baseUrl": "http://localhost:5173",
+  "baseUrl": "http://localhost:3000",
   "screens": [
-    { "category": "Full Scan", "id": "master-scan", "name": "Project Master Scan", "tabIndex": 4, "selector": "body" },
-    { "category": "Pages", "id": "bulk-search", "name": "Bulk Search Page", "tabIndex": 0, "selector": "body" },
-    { "category": "Pages", "id": "workflows", "name": "Workflows Page", "tabIndex": 3, "selector": "body" }
+    { 
+      "category": "Main Flow", 
+      "id": "dashboard", 
+      "name": "Dashboard Overview", 
+      "selector": "body" 
+    },
+    { 
+      "category": "Components", 
+      "id": "settings-modal", 
+      "name": "Settings Modal", 
+      "actions": [
+        { "type": "click", "text": "Open Settings" },
+        { "type": "wait", "ms": 500 }
+      ],
+      "selector": ".modal-content" 
+    }
   ]
 }

@@ -1,99 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <title>UI Sync Kit Plugin</title>
   <style>
-    body { font-family: 'Inter', sans-serif; padding: 16px; background: #ffffff; color: #333; margin: 0; }
-    h2 { font-size: 14px; margin-bottom: 20px; color: #111; font-weight: 600; letter-spacing: -0.01em; }
+    :root {
+      --primary: #00b4ed;
+      --bg: #ffffff;
+      --text-main: #333333;
+      --text-muted: #999999;
+      --border: #f0f0f0;
+    }
+    body { 
+      font-family: 'Inter', -apple-system, sans-serif; 
+      padding: 16px; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      margin: 0; 
+    }
+    h2 { 
+      font-size: 14px; 
+      margin-bottom: 16px; 
+      color: #111; 
+      font-weight: 600; 
+      letter-spacing: -0.01em; 
+    }
     
+    .section-label { 
+      font-size: 10px; 
+      font-weight: 700; 
+      color: #aaa; 
+      text-transform: uppercase; 
+      margin-bottom: 8px; 
+      display: block; 
+    }
+
     .category-title {
-      font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase;
-      letter-spacing: 0.05em; margin: 16px 0 8px 0;
+      font-size: 10px; 
+      font-weight: 700; 
+      color: var(--text-muted); 
+      text-transform: uppercase;
+      letter-spacing: 0.05em; 
+      margin: 20px 0 8px 0;
     }
 
     .screen-item { 
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      padding: 8px 0; 
+      border-bottom: 1px solid var(--border);
     }
     .screen-item:last-child { border-bottom: none; }
     
-    .screen-name { font-size: 12px; font-weight: 500; color: #333; }
+    .screen-name { font-size: 12px; font-weight: 500; }
     
-    /* Toggle Switch Style */
-    .switch {
-      position: relative; display: inline-block; width: 34px; height: 20px;
-    }
+    /* Custom Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 32px; height: 18px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider {
       position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #e0e0e0; transition: .3s; border-radius: 20px;
+      background-color: #e0e0e0; transition: .3s; border-radius: 18px;
     }
     .slider:before {
-      position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+      position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
       background-color: white; transition: .3s; border-radius: 50%;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    input:checked + .slider { background-color: #00b4ed; }
+    input:checked + .slider { background-color: var(--primary); }
     input:checked + .slider:before { transform: translateX(14px); }
 
-    .actions { margin-top: 24px; position: sticky; bottom: 0; background: white; padding-top: 10px; }
+    /* Resolution Picker */
+    .resolution-picker {
+      display: flex; 
+      gap: 12px; 
+      margin-bottom: 24px; 
+      padding: 12px; 
+      background: #f8f9fa; 
+      border-radius: 8px;
+    }
+    .res-option { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      font-size: 11px; 
+      font-weight: 600; 
+      cursor: pointer; 
+    }
+
+    /* Actions & Footer */
+    .actions { 
+      margin-top: 24px; 
+      position: sticky; 
+      bottom: 0; 
+      background: var(--bg); 
+      padding-top: 10px; 
+    }
     button { 
-      width: 100%; padding: 12px; background: #111; color: white; border: none;
-      border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+      width: 100%; 
+      padding: 12px; 
+      background: #111; 
+      color: white; 
+      border: none;
+      border-radius: 8px; 
+      font-size: 12px; 
+      font-weight: 600; 
+      cursor: pointer;
       transition: background 0.2s;
     }
-    button:hover { background: #333; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    button:hover:not(:disabled) { background: #333; }
     
-    .footer { font-size: 10px; color: #aaa; text-align: center; margin-top: 20px; font-weight: 400; padding-bottom: 16px; }
+    .footer { 
+      font-size: 10px; 
+      color: #aaa; 
+      text-align: center; 
+      margin-top: 20px; 
+      font-weight: 400; 
+      padding-bottom: 16px; 
+      line-height: 1.4;
+    }
+    .footer a { color: var(--primary); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <h2>Import Screens & Elements</h2>
+  <h2>Sync Blueprints</h2>
+  
+  <span class="section-label">Select Resolution</span>
+  <div class="resolution-picker">
+    <label class="res-option"><input type="checkbox" id="res-1080p" checked> 1080p</label>
+    <label class="res-option"><input type="checkbox" id="res-720p"> 720p</label>
+  </div>
+
+  <span class="section-label">Live Content Detection</span>
   <div id="screen-list"></div>
+
   <div class="actions">
     <button id="import-btn">Import Selected</button>
   </div>
   <div class="footer">
-    UI Sync Kit v2.1<br>
-    by <a href="https://github.com/coviyarce/gemini-cli-ui-capture" target="_blank" style="color: #00b4ed; text-decoration: none;">Coviyarce</a>
+    UI Sync Kit v3.2<br>
+    Built by <a href="https://github.com/coviyarce" target="_blank">Luis Covilla (Coviyarce)</a>
   </div>
 
   <script>
-    const screens = [{"id":"master-scan","name":"Project Master Scan","category":"Full Scan"},{"id":"bulk-search","name":"Bulk Search Page","category":"Pages"},{"id":"workflows","name":"Workflows Page","category":"Pages"}];
+    // Injected by update-plugin.cjs
+    const allData = __CAPTURED_DATA__;
     const listDiv = document.getElementById('screen-list');
 
-    // Group by category
-    const categories = {};
-    screens.forEach(s => {
-        const cat = s.category || 'Other';
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(s);
-    });
+    if (!allData || Object.keys(allData).length === 0) {
+      listDiv.innerHTML = '<div style="font-size: 11px; color: #888;">No UI blueprints found. Run the capture script first.</div>';
+    } else {
+      // Grouping logic based on categories in the JSON
+      const categories = {};
+      Object.keys(allData).forEach(id => {
+          const item = allData[id];
+          const cat = item.category || 'Other';
+          if (!categories[cat]) categories[cat] = [];
+          categories[cat].push({ id, name: item.name || id });
+      });
 
-    Object.keys(categories).forEach(catName => {
-        const catHeader = document.createElement('div');
-        catHeader.className = 'category-title';
-        catHeader.innerText = catName;
-        listDiv.appendChild(catHeader);
+      Object.keys(categories).forEach(catName => {
+          const catHeader = document.createElement('div');
+          catHeader.className = 'category-title';
+          catHeader.innerText = catName;
+          listDiv.appendChild(catHeader);
 
-        categories[catName].forEach(screen => {
-            const div = document.createElement('div');
-            div.className = 'screen-item';
-            div.innerHTML = `
-                <span class="screen-name">${screen.name}</span>
-                <label class="switch">
-                <input type="checkbox" id="${screen.id}" value="${screen.id}" checked>
-                <span class="slider"></span>
-                </label>
-            `;
-            listDiv.appendChild(div);
-        });
-    });
-
-    document.getElementById('import-btn').onclick = () => {
-      const selected = Array.from(document.querySelectorAll('input:checked')).map(cb => cb.value);
-      if (selected.length === 0) return;
-      parent.postMessage({ pluginMessage: { type: 'import', ids: selected } }, '*');
+          categories[catName].forEach(screen => {
+              const div = document.createElement('div');
+              div.className = 'screen-item';
+              div.innerHTML = `
+                  <span class="screen-name">${screen.name}</span>
+                  <label class="switch">
+                  <input type="checkbox" class="screen-cb" value="${screen.id}" checked>
+                  <span class="slider"></span>
+                  </label>
+              `;
+              listDiv.appendChild(div);
+          });
+      });
     }
+
+    function validate() {
+      const anyRes = document.getElementById('res-1080p')?.checked || document.getElementById('res-720p')?.checked;
+      const anyScreen = document.querySelectorAll('.screen-cb:checked').length > 0;
+      const btn = document.getElementById('import-btn');
+      if (btn) btn.disabled = !anyRes || !anyScreen;
+    }
+
+    document.querySelectorAll('input').forEach(el => el.addEventListener('change', validate));
+
+    const importBtn = document.getElementById('import-btn');
+    if (importBtn) {
+      importBtn.onclick = () => {
+        const selectedIds = Array.from(document.querySelectorAll('.screen-cb:checked')).map(cb => cb.value);
+        const resolutions = [];
+        if (document.getElementById('res-1080p').checked) resolutions.push('1080p');
+        if (document.getElementById('res-720p').checked) resolutions.push('720p');
+        
+        // Send message to Figma sandbox (code.js)
+        parent.postMessage({ pluginMessage: { type: 'import', ids: selectedIds, resolutions } }, '*');
+      };
+    }
+    
+    validate();
   </script>
 </body>
 </html>
