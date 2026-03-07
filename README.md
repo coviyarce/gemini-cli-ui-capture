@@ -1,29 +1,29 @@
 # Gemini CLI UI Capture Kit
 
-Este kit permite capturar interfaces web reales y convertirlas en capas vectoriales de alta fidelidad dentro de Figma. Es un puente universal entre el código en ejecución y el diseño, permitiendo una sincronización perfecta sin capturas de pantalla estáticas.
+This kit allows you to capture live web interfaces and convert them into high-fidelity vector layers within Figma. It acts as a universal bridge between your running code and design, enabling seamless synchronization without relying on static screenshots.
 
-## Requisitos del Proyecto Objetivo
+## Target Project Requirements
 
-Para que el kit funcione de manera óptima con cualquier proyecto, se recomienda:
+For the kit to work optimally with any project, the following is recommended:
 
-1.  **Tab de Storyboard (Recomendado):** Crear una ruta o pestaña (ej. `/master-scan`) que renderice todos los componentes, modales y estados uno al lado del otro. Esto permite al kit escanear todo sin necesidad de navegar manualmente por modales flotantes.
-2.  **Selectores Estables:** Asegurarse de que los elementos importantes tengan clases o atributos predecibles (MUI funciona perfecto por defecto).
-3.  **Fuentes Estándar:** El kit prioriza **Helvetica Neue** con fallbacks a Inter y Roboto.
+1.  **Storyboard Tab (Highly Recommended):** Create a dedicated route or tab (e.g., `/master-scan`) that renders all components, modals, and states side-by-side in plain sight. This allows the capture tool to scan everything directly without needing to manually interact with floating modals.
+2.  **Stable Selectors:** Ensure that important elements have predictable classes or attributes (MUI works perfectly by default).
+3.  **Standard Fonts:** The kit prioritizes **Helvetica Neue** with fallbacks to Inter and Roboto.
 
-## Instalación del Kit
+## Kit Installation
 
-Si deseas usar este kit de forma independiente (fuera de tu proyecto principal):
+If you want to use this kit independently (outside your main project):
 
 ```bash
-git clone https://github.com/coviyarce/gemini-cli-ui-capture.git
+git clone git@github.com:coviyarce/gemini-cli-ui-capture.git
 cd gemini-cli-ui-capture
 npm install
 ```
 
-## Uso y Ejecución
+## Usage & Execution
 
-### 1. Configuración
-Edita `capture-config.json` para apuntar a tu servidor local y definir las pantallas:
+### 1. Configuration
+Edit `capture-config.json` to point to your local server and define the screens:
 
 ```json
 {
@@ -34,34 +34,34 @@ Edita `capture-config.json` para apuntar a tu servidor local y definir las panta
 }
 ```
 
-### 2. Captura de la UI
-Asegúrate de que tu aplicación esté corriendo y ejecuta el script de captura:
+### 2. UI Capture
+Ensure your application is running and execute the capture script:
 
-*   **Rescan Completo (Recomendado):** Reconstruye el archivo de datos desde cero.
+*   **Full Rescan (Recommended):** Rebuilds the data file from scratch.
     ```bash
     node scripts/capture-to-figma.cjs --rebuild
     ```
-*   **Actualización Incremental:** Solo añade pantallas nuevas definidas en el config.
+*   **Incremental Update:** Only adds new screens defined in the config.
     ```bash
     node scripts/capture-to-figma.cjs
     ```
 
-### 3. Inyección en el Plugin
-Sincroniza los datos capturados con el plugin local de Figma:
+### 3. Plugin Injection
+Synchronize the captured data with the local Figma plugin:
 ```bash
 node scripts/update-plugin.cjs
 ```
 
-### 4. Importación en Figma
-1.  En Figma, ve a `Plugins > Development > Import plugin from manifest...`.
-2.  Selecciona el archivo `figma-plugin/manifest.json` de esta carpeta.
-3.  Abre el plugin, selecciona las pantallas y haz clic en **Import Selected**.
+### 4. Figma Import
+1.  In Figma, go to `Plugins > Development > Import plugin from manifest...`.
+2.  Select the `figma-plugin/manifest.json` file from this folder.
+3.  Open the plugin, select the screens, and click **Import Selected**.
 
-## Características de Alta Fidelidad
-- **Vectorización Real:** No son imágenes; son frames, vectores y textos reales de Figma.
-- **Soporte de Formularios:** Captura valores de `input`, `select` y placeholders.
-- **Portales y Modales:** Detecta elementos renderizados fuera del flujo normal (como Portals de MUI).
-- **Resoluciones Múltiples:** Captura automática en 1080p y 720p.
+## High-Fidelity Features
+- **True Vectorization:** These are not images; they are real Figma frames, vectors, and text layers.
+- **Form Support:** Captures values of `input`, `select`, and placeholders.
+- **Portals & Modals:** Detects elements rendered outside the normal document flow (like MUI Portals).
+- **Multiple Resolutions:** Automatic capture in 1080p and 720p.
 
 ---
 Built by [Coviyarce](https://github.com/coviyarce/gemini-cli-ui-capture)
