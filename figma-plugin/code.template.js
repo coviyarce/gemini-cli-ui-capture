@@ -32,102 +32,129 @@ figma.ui.onmessage = async (msg) => {
       return shadows;
     }
 
-    await figma.loadFontAsync({ family: "Helvetica Neue", style: "Medium" });
-    await figma.loadFontAsync({ family: "Helvetica Neue", style: "Regular" });
+    const fontFamilies = ["Helvetica Neue", "Inter", "Roboto", "Arial"];
+    const fontStyles = ["Regular", "Medium", "Bold"];
+    async function loadFonts() {
+      for (const family of fontFamilies) {
+        for (const style of fontStyles) {
+          try { await figma.loadFontAsync({ family, style }); } catch (e) {}
+        }
+      }
+    }
+    await loadFonts();
     
     const viewportCenter = figma.viewport.center;
 
     async function drawNode(parent, data, offX, offY) {
-      const s = data.styles;
-      const bgColor = parseColor(s.backgroundColor);
-      const textColor = parseColor(s.color);
-      
-      if (data.iconType === 'svg' && data.svgContent) {
-          try {
-              const svgNode = figma.createNodeFromSvg(data.svgContent);
-              const scale = Math.min(s.width / svgNode.width, s.height / svgNode.height);
-              svgNode.rescale(scale);
-              svgNode.x = (s.x - offX) + (s.width - svgNode.width) / 2;
-              svgNode.y = (s.y - offY) + (s.height - svgNode.height) / 2;
-              const color = { r: textColor.r, g: textColor.g, b: textColor.b };
-              function applyColor(node) {
-                  if (node.type === "VECTOR" || node.type === "BOOLEAN_OPERATION") node.fills = [{ type: 'SOLID', color }];
-                  if ("children" in node) node.children.forEach(applyColor);
-              }
-              if ("fills" in svgNode) svgNode.fills = [];
-              svgNode.children.forEach(applyColor);
-              parent.appendChild(svgNode);
-              return;
-          } catch (e) {}
-      }
+      try {
+        const s = data.styles;
+        const bgColor = parseColor(s.backgroundColor);
+        const textColor = parseColor(s.color);
+        const opacity = parseFloat(s.opacity) || 1;
+        if (opacity === 0 || s.display === 'none') return;
 
-      const frame = figma.createFrame();
-      frame.name = data.tag + (data.text ? `: ${data.text.substring(0,10)}` : "");
-      frame.resize(Math.max(0.1, s.width), Math.max(0.1, s.height));
-      frame.x = s.x - offX; frame.y = s.y - offY;
-      frame.fills = bgColor.a > 0 ? [{ type: 'SOLID', color: { r: bgColor.r, g: bgColor.g, b: bgColor.b }, opacity: bgColor.a }] : [];
-      const radius = parseFloat(s.borderRadius);
-      if (radius) frame.cornerRadius = radius;
+        if (data.iconType === 'svg' && data.svgContent) {
+            try {
+                const svgNode = figma.createNodeFromSvg(data.svgContent);
+                const scale = Math.min(s.width / svgNode.width, s.height / svgNode.height);
+                svgNode.rescale(scale);
+                svgNode.x = (s.x - offX) + (s.width - svgNode.width) / 2;
+                svgNode.y = (s.y - offY) + (s.height - svgNode.height) / 2;
+                const color = { r: textColor.r, g: textColor.g, b: textColor.b };
+                function applyColor(node) {
+                    if (node.type === "VECTOR" || node.type === "BOOLEAN_OPERATION") node.fills = [{ type: 'SOLID', color }];
+                    if ("children" in node) node.children.forEach(applyColor);
+                }
+                if ("fills" in svgNode) svgNode.fills = [];
+                svgNode.children.forEach(applyColor);
+                parent.appendChild(svgNode);
+                return;
+            } catch (e) {}
+        }
 
-      const hasBorder = (side) => s[side] && !s[side].includes('0px none');
-      if (hasBorder('borderBottom') || hasBorder('borderTop') || hasBorder('borderLeft') || hasBorder('borderRight')) {
-          frame.strokes = [{ type: 'SOLID', color: { r: 0.88, g: 0.89, b: 0.9 } }];
-          frame.strokeWeight = 1;
-          frame.strokeTopWeight = hasBorder('borderTop') ? 1 : 0;
-          frame.strokeBottomWeight = hasBorder('borderBottom') ? 1 : 0;
-          frame.strokeLeftWeight = hasBorder('borderLeft') ? 1 : 0;
-          frame.strokeRightWeight = hasBorder('borderRight') ? 1 : 0;
-      }
+        const frame = figma.createFrame();
+        frame.name = data.tag + (data.text ? `: ${data.text.substring(0,15)}` : "");
+        frame.resize(Math.max(0.1, s.width), Math.max(0.1, s.height));
+        frame.x = s.x - offX; frame.y = s.y - offY;
+        frame.fills = bgColor.a > 0 ? [{ type: 'SOLID', color: { r: bgColor.r, g: bgColor.g, b: bgColor.b }, opacity: bgColor.a * opacity }] : [];
+        const radius = parseFloat(s.borderRadius);
+        if (radius) frame.cornerRadius = radius;
 
-      const effects = parseShadows(s.boxShadow);
-      if (effects.length > 0) frame.effects = effects;
+        const hasBorder = (side) => s[side] && !s[side].includes('0px none') && !s[side].startsWith('0px');
+        if (hasBorder('borderBottom') || hasBorder('borderTop') || hasBorder('borderLeft') || hasBorder('borderRight')) {
+            frame.strokes = [{ type: 'SOLID', color: { r: 0.88, g: 0.89, b: 0.9 } }];
+            frame.strokeWeight = 1;
+            frame.strokeTopWeight = hasBorder('borderTop') ? 1 : 0;
+            frame.strokeBottomWeight = hasBorder('borderBottom') ? 1 : 0;
+            frame.strokeLeftWeight = hasBorder('borderLeft') ? 1 : 0;
+            frame.strokeRightWeight = hasBorder('borderRight') ? 1 : 0;
+        }
 
-      if (data.text && data.text.length > 0) {
-        const textNode = figma.createText();
-        const style = parseInt(s.fontWeight) >= 500 ? "Medium" : "Regular";
-        textNode.fontName = { family: "Helvetica Neue", style: style };
-        textNode.characters = data.text;
-        textNode.fontSize = parseFloat(s.fontSize) || 14;
-        textNode.fills = [{ type: 'SOLID', color: { r: textColor.r, g: textColor.g, b: textColor.b }, opacity: textColor.a }];
-        const tW = s.width - (s.paddingLeft || 0) - (s.paddingRight || 0);
-        const tH = s.height - (s.paddingTop || 0) - (s.paddingBottom || 0);
-        textNode.resize(Math.max(1, tW), Math.max(1, tH));
-        textNode.x = s.paddingLeft || 0; textNode.y = s.paddingTop || 0;
-        textNode.textAlignHorizontal = s.textAlign === 'right' ? "RIGHT" : (s.textAlign === 'center' ? "CENTER" : "LEFT");
-        textNode.textAlignVertical = "CENTER";
-        frame.appendChild(textNode);
-      }
+        const effects = parseShadows(s.boxShadow);
+        if (effects.length > 0) frame.effects = effects;
 
-      parent.appendChild(frame);
-      if (data.children) {
-        for (const child of data.children) { await drawNode(frame, child, s.x, s.y); }
-      }
+        if (data.text && data.text.length > 0) {
+          const textNode = figma.createText();
+          const fontWeight = parseInt(s.fontWeight);
+          const style = fontWeight >= 700 ? "Bold" : (fontWeight >= 500 ? "Medium" : "Regular");
+          
+          let fontSet = false;
+          for (const family of fontFamilies) {
+            try {
+              textNode.fontName = { family, style };
+              fontSet = true;
+              break;
+            } catch (e) {
+              try {
+                textNode.fontName = { family, style: "Regular" };
+                fontSet = true;
+                break;
+              } catch (e2) {}
+            }
+          }
+
+          if (fontSet) {
+            textNode.characters = data.text;
+            textNode.fontSize = parseFloat(s.fontSize) || 14;
+            textNode.fills = [{ type: 'SOLID', color: { r: textColor.r, g: textColor.g, b: textColor.b }, opacity: textColor.a * opacity }];
+            const tW = Math.max(1, s.width - (s.paddingLeft || 0) - (s.paddingRight || 0));
+            const tH = Math.max(1, s.height - (s.paddingTop || 0) - (s.paddingBottom || 0));
+            textNode.resize(tW, tH);
+            textNode.x = s.paddingLeft || 0; textNode.y = s.paddingTop || 0;
+            textNode.textAlignHorizontal = s.textAlign === 'right' ? "RIGHT" : (s.textAlign === 'center' ? "CENTER" : "LEFT");
+            textNode.textAlignVertical = "CENTER";
+            frame.appendChild(textNode);
+          }
+        }
+
+        parent.appendChild(frame);
+        if (data.children) {
+          for (const child of data.children) { await drawNode(frame, child, s.x, s.y); }
+        }
+      } catch (err) {}
     }
 
     let currentX = viewportCenter.x;
     for (const screenId of selectedIds) {
-      const resolutions = allData[screenId]; // This contains 1080p and 720p for this specific screen
+      const resolutions = allData[screenId]; 
       if (!resolutions) continue;
-
       for (const resKey of Object.keys(resolutions)) {
         const uiData = resolutions[resKey];
+        if (!uiData || !uiData.styles) continue;
         const mainFrame = figma.createFrame();
         mainFrame.name = `Import: ${screenId} (${resKey})`;
         mainFrame.resize(uiData.styles.width, uiData.styles.height);
         mainFrame.x = currentX;
         mainFrame.y = viewportCenter.y - (uiData.styles.height / 2);
-        
         const bg = parseColor(uiData.styles.backgroundColor);
         mainFrame.fills = [{ type: 'SOLID', color: { r: bg.r, g: bg.g, b: bg.b }, opacity: bg.a || 1 }];
-        
-        for (const child of uiData.children) {
-          await drawNode(mainFrame, child, uiData.styles.x, uiData.styles.y);
+        if (uiData.children) {
+          for (const child of uiData.children) { await drawNode(mainFrame, child, uiData.styles.x, uiData.styles.y); }
         }
         currentX += uiData.styles.width + 200;
       }
-      currentX += 400; // Extra gap between different screen sets
+      currentX += 400; 
     }
-
     figma.closePlugin("Selected screens imported successfully! 🚀");
   }
 };

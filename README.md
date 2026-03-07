@@ -1,109 +1,67 @@
-# 🚀 Gemini CLI UI Capture Tool for Figma
+# Gemini CLI UI Capture Kit
 
-A powerful toolkit for **UI-to-Design** synchronization. This tool captures live web interfaces (localhost or production) and recreates them as high-fidelity, editable vector layers in Figma using a local development plugin.
+Este kit permite capturar interfaces web reales y convertirlas en capas vectoriales de alta fidelidad dentro de Figma. Es un puente universal entre el código en ejecución y el diseño, permitiendo una sincronización perfecta sin capturas de pantalla estáticas.
 
-Built specifically to bridge the gap in environments where the native Figma MCP `capture_ui` tool is not directly exposed, allowing developers to maintain a perfect sync between their code and their design canvas.
+## Requisitos del Proyecto Objetivo
 
----
+Para que el kit funcione de manera óptima con cualquier proyecto, se recomienda:
 
-## 🖼 Visual Preview
+1.  **Tab de Storyboard (Recomendado):** Crear una ruta o pestaña (ej. `/master-scan`) que renderice todos los componentes, modales y estados uno al lado del otro. Esto permite al kit escanear todo sin necesidad de navegar manualmente por modales flotantes.
+2.  **Selectores Estables:** Asegurarse de que los elementos importantes tengan clases o atributos predecibles (MUI funciona perfecto por defecto).
+3.  **Fuentes Estándar:** El kit prioriza **Helvetica Neue** con fallbacks a Inter y Roboto.
 
-### High-Fidelity UI Capture
-The toolkit captures complex web interfaces with pixel-perfect accuracy, preserving the hierarchy, typography, and styling of your Design System.
+## Instalación del Kit
 
-![Web App Preview](assets/app-preview.png)
+Si deseas usar este kit de forma independiente (fuera de tu proyecto principal):
 
-### Modern Figma Plugin UI
-A sleek, toggle-based interface allows you to selectively import multiple screens and resolutions directly into your Figma workspace.
-
-<img src="assets/plugin-ui.png" width="300" alt="Plugin UI Preview">
-
----
-
-## ✨ Features & Evolution
-
-This tool evolved through rigorous iteration to achieve near-perfect design fidelity:
-
-- **1.0: Basic Capture** - Initial implementation of DOM scanning.
-- **2.0: Multi-Resolution** - Support for dual-view captures (e.g., 1080p and 720p) to test responsiveness.
-- **3.0: Precision Alignment** - Added support for CSS Flexbox, Padding, and Text Alignment, ensuring content is centered exactly as in the browser.
-- **4.0: High Fidelity** - Support for `box-shadow` (translated to Figma Drop Shadows), full borders, and corner radii.
-- **5.0: Vector & Icons** - Real SVG extraction and rendering using Figma's vector engine. Support for Icon fonts and automatic color synchronization with design themes.
-
----
-
-## 🛠 Prerequisites
-
-### CLI Side (Development Environment)
-- **Node.js** (v16 or higher)
-- **Puppeteer**: Used to drive the headless browser for pixel-perfect UI extraction.
-- **Gemini CLI / MCP**: Configured with Figma MCP permissions.
-
-### Figma Side
-- **Figma Desktop App** (Recommended for local plugin development).
-- **Figma Account**: Permissions to import local plugins.
-
----
-
-## 🚀 Quick Start
-
-### 1. Installation
-Clone this toolkit into your project or as a standalone tool:
 ```bash
 git clone https://github.com/coviyarce/gemini-cli-ui-capture.git
 cd gemini-cli-ui-capture
 npm install
 ```
 
-### 2. Configure Screens
-Edit `capture-config.json` to define the screens you want to capture:
+## Uso y Ejecución
+
+### 1. Configuración
+Edita `capture-config.json` para apuntar a tu servidor local y definir las pantallas:
+
 ```json
 {
-  "baseUrl": "http://localhost:[YOUR_PORT]",
+  "baseUrl": "http://localhost:5173",
   "screens": [
-    { "category": "Pages", "id": "dashboard", "name": "Main Dashboard", "selector": "main" },
-    { "category": "Modals", "id": "settings", "name": "Settings Page", "selector": ".settings-container" }
+    { "category": "Scan", "id": "master", "name": "Full Scan", "tabIndex": 4, "selector": "body" }
   ]
 }
 ```
 
-### 3. Capture your UI
-Run the capture script to generate the UI blueprint. Ensure your local dev server is running.
+### 2. Captura de la UI
+Asegúrate de que tu aplicación esté corriendo y ejecuta el script de captura:
+
+*   **Rescan Completo (Recomendado):** Reconstruye el archivo de datos desde cero.
+    ```bash
+    node scripts/capture-to-figma.cjs --rebuild
+    ```
+*   **Actualización Incremental:** Solo añade pantallas nuevas definidas en el config.
+    ```bash
+    node scripts/capture-to-figma.cjs
+    ```
+
+### 3. Inyección en el Plugin
+Sincroniza los datos capturados con el plugin local de Figma:
 ```bash
-npm run capture
-```
-This generates `ui-structure.json` containing the detailed map of your interface.
-
-### 4. Update the Plugin
-Sync the captured data into the Figma plugin code:
-```bash
-npm run update-plugin
+node scripts/update-plugin.cjs
 ```
 
-### 5. Run in Figma
-1. Open Figma -> Menu -> **Plugins** -> **Development** -> **Import plugin from manifest...**
-2. Select the `figma-plugin/manifest.json` file from this folder.
-3. Run **"UI Sync Plugin"**.
-4. The tool will detect your current viewport center and create frames with editable vector layers.
+### 4. Importación en Figma
+1.  En Figma, ve a `Plugins > Development > Import plugin from manifest...`.
+2.  Selecciona el archivo `figma-plugin/manifest.json` de esta carpeta.
+3.  Abre el plugin, selecciona las pantallas y haz clic en **Import Selected**.
+
+## Características de Alta Fidelidad
+- **Vectorización Real:** No son imágenes; son frames, vectores y textos reales de Figma.
+- **Soporte de Formularios:** Captura valores de `input`, `select` y placeholders.
+- **Portales y Modales:** Detecta elementos renderizados fuera del flujo normal (como Portals de MUI).
+- **Resoluciones Múltiples:** Captura automática en 1080p y 720p.
 
 ---
-
-## 📂 Repository Structure
-
-- `scripts/capture-to-figma.cjs`: The core engine that uses Puppeteer to scan the DOM and styles.
-- `scripts/update-plugin.cjs`: Utility to inject captured data into the Figma plugin.
-- `figma-plugin/`: The local Figma plugin source code.
-  - `manifest.json`: Plugin configuration.
-  - `code.template.js`: The logic for drawing nodes in Figma (Text, Frames, SVGs, Shadows).
-  - `code.js`: The active plugin file (generated).
-
----
-
-## 🔒 Security & Privacy
-This tool is designed for private use. It does **not** store or transmit your Figma credentials or personal access tokens. All capture data remains local to your machine until you run the plugin within your authorized Figma session.
-
----
-
-## 🤝 Attribution
-Created and maintained by [**Coviyarce**](https://github.com/coviyarce/gemini-cli-ui-capture). 
-Built with 💎 Gemini CLI.
+Built by [Coviyarce](https://github.com/coviyarce/gemini-cli-ui-capture)
