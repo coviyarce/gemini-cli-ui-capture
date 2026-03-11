@@ -1,21 +1,11 @@
 {
-  "baseUrl": "http://localhost:3000",
+  "baseUrl": "http://localhost:5173",
   "screens": [
-    { 
-      "category": "Main Flow", 
-      "id": "dashboard", 
-      "name": "Dashboard Overview", 
-      "selector": "body" 
-    },
-    { 
-      "category": "Components", 
-      "id": "settings-modal", 
-      "name": "Settings Modal", 
-      "actions": [
-        { "type": "click", "text": "Open Settings" },
-        { "type": "wait", "ms": 500 }
-      ],
-      "selector": ".modal-content" 
-    }
+    { "category": "Pages", "id": "bulk-search", "name": "Bulk Search", "actions": [{ "type": "click", "text": "Bulk Search" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "container-selection", "name": "Container Selection", "actions": [{ "type": "click", "text": "Container Selection" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "container-detail", "name": "Container Detail Card", "actions": [{ "type": "click", "text": "Container Detail Card" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "create-container", "name": "Create Container", "actions": [{ "type": "click", "text": "Create Container" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "workflows", "name": "Workflows", "actions": [{ "type": "click", "text": "Workflows" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Master", "id": "master-scan", "name": "Full Project Storyboard", "actions": [{ "type": "click", "text": "Master Scan" }, { "type": "wait", "ms": 1000 }], "selector": "body" }
   ]
 }

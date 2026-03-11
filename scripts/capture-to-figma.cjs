@@ -18,7 +18,7 @@ const path = require('path');
 
 // ─── Configuration Setup ───
 const configPath = path.join(__dirname, '../capture-config.json');
-const uiDataPath = path.join(__dirname, 'ui-structure.json');
+const uiDataPath = path.join(__dirname, '../../polaris-ds/superscan/ui-structure.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 // Determine run mode (Rebuild vs Incremental)

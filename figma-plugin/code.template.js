@@ -10,7 +10,7 @@ figma.showUI(__html__, { width: 320, height: 480 });
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'import') {
     // __CAPTURED_DATA__ is injected by the update-plugin.cjs script
-    const allData = __CAPTURED_DATA__;
+    const allData = msg.dataOverride || __CAPTURED_DATA__;
     const selectedIds = msg.ids;
     
     /** Parses CSS rgba/rgb strings into Figma's color format */

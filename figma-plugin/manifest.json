@@ -1,10 +1,11 @@
 {
-  "name": "Polaris Sync Plugin",
-  "id": "polaris-sync-plugin-dev",
+  "name": "SuperScan UI Sync Kit v3.5",
+  "id": "superscan-ui-sync-v35",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
-  "capabilities": [],
-  "enableProposedApi": false,
-  "editorType": ["figma"]
+  "editorType": [
+    "figma",
+    "figjam"
+  ]
 }
