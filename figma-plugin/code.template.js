@@ -1,8 +1,6 @@
 /**
- * Figma Plugin Code Template (Atomic High-Fidelity)
- * -----------------------------------------------
- * This engine maps complex browser styles (Flex, Z-index, shadows) 
- * to native Figma Frame and Vector nodes.
+ * Figma Plugin Code Template (Atomic High-Fidelity v3.6)
+ * -----------------------------------------------------
  */
 
 figma.showUI(__html__, { width: 340, height: 500 });
@@ -11,8 +9,6 @@ figma.ui.onmessage = async (msg) => {
   if (msg.type === 'import') {
     const allData = msg.dataOverride || __CAPTURED_DATA__;
     const selectedIds = msg.ids;
-    
-    console.log('🚀 Plugin received Atomic Import request for IDs:', selectedIds);
 
     // ── Helper: Parse Colors ──
     function parseColor(cssColor) {
@@ -25,29 +21,6 @@ figma.ui.onmessage = async (msg) => {
         b: parseInt(match[3]) / 255, 
         a: match[4] ? parseFloat(match[4]) : 1 
       };
-    }
-
-    // ── Helper: Parse Shadows ──
-    function parseShadows(shadowString) {
-      if (!shadowString || shadowString === 'none') return [];
-      const shadows = [];
-      const parts = shadowString.split(/,(?![^\(]*\))/);
-      parts.forEach(sh => {
-          const match = sh.match(/(rgba?\(.*?\))\s*(-?\d+px)\s*(-?\d+px)\s*(\d+px)\s*(-?\d+px)?/);
-          if (match) {
-              const color = parseColor(match[1]);
-              shadows.push({
-                  type: 'DROP_SHADOW', 
-                  color: { r: color.r, g: color.g, b: color.b, a: color.a },
-                  offset: { x: parseFloat(match[2]), y: parseFloat(match[3]) },
-                  radius: parseFloat(match[4]), 
-                  spread: match[5] ? parseFloat(match[5]) : 0,
-                  visible: true, 
-                  blendMode: 'NORMAL'
-              });
-          }
-      });
-      return shadows;
     }
 
     // ── Helper: Font Loading ──
@@ -66,18 +39,18 @@ figma.ui.onmessage = async (msg) => {
     }
 
     /**
-     * Recursive drawing engine. Maps JSON node properties to Figma Node properties.
+     * Recursive drawing engine.
      */
     async function drawNode(parent, data, offX, offY, depth = 0) {
-      if (depth > 50) return;
+      if (depth > 60) return;
       try {
         const s = data.styles;
         if (!s) return;
 
         const opacity = parseFloat(s.opacity) || 1;
-        if (opacity < 0.01 || s.display === 'none' || (s.width <= 0 && s.height <= 0)) return;
+        if (opacity < 0.01 || s.display === 'none') return;
 
-        // 1. TEXT NODE
+        // 1. TEXT NODE (Using precision Range coordinates)
         if (data.tag === 'text-node' && data.text && data.text.trim()) {
           const textNode = figma.createText();
           const font = await loadFont(s.fontFamily.split(',')[0].replace(/"/g, ''), parseInt(s.fontWeight));
@@ -87,30 +60,31 @@ figma.ui.onmessage = async (msg) => {
             textNode.fontSize = Math.max(1, parseFloat(s.fontSize) || 14);
             const color = parseColor(s.color);
             textNode.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a * opacity }];
-            textNode.resize(Math.max(1, s.width), Math.max(1, s.height));
+            
+            // Align based on precision capture
             textNode.x = s.x - offX; 
             textNode.y = s.y - offY;
-            textNode.textAlignHorizontal = s.textAlign === 'right' ? "RIGHT" : (s.textAlign === 'center' ? "CENTER" : "LEFT");
+            textNode.resize(Math.max(1, s.width), Math.max(1, s.height));
+            
             parent.appendChild(textNode);
           }
           return;
         }
 
-        // 2. SVG / ICON
+        // 2. SVG (Icons)
         if (data.tag === 'svg' && data.svgContent) {
           try {
             const svgNode = figma.createNodeFromSvg(data.svgContent);
             svgNode.x = s.x - offX;
             svgNode.y = s.y - offY;
-            // Scale if needed
             const scale = Math.min(s.width / svgNode.width, s.height / svgNode.height);
             if (scale > 0 && scale !== 1) svgNode.rescale(scale);
             parent.appendChild(svgNode);
             return;
-          } catch (e) { console.warn("SVG error:", e); }
+          } catch (e) {}
         }
 
-        // 3. FRAME / CONTAINER
+        // 3. FRAME
         const frame = figma.createFrame();
         frame.name = data.tag || "div";
         frame.resize(Math.max(0.1, s.width), Math.max(0.1, s.height));
@@ -124,19 +98,10 @@ figma.ui.onmessage = async (msg) => {
           frame.fills = [];
         }
 
-        const radius = parseFloat(s.borderRadius);
-        if (radius) frame.cornerRadius = radius;
-
-        // Borders
-        const hasBorder = (side) => s[side] && !s[side].includes('none') && !s[side].startsWith('0px');
-        if (hasBorder('borderBottom') || hasBorder('borderTop') || hasBorder('borderLeft') || hasBorder('borderRight')) {
-          const borderColor = parseColor(s.borderTop.split(' ')[2]); // Simplistic extraction
-          frame.strokes = [{ type: 'SOLID', color: { r: borderColor.r, g: borderColor.g, b: borderColor.b } }];
-          frame.strokeWeight = parseFloat(s.borderTop.split(' ')[0]) || 1;
+        if (s.borderRadius) {
+          const radius = parseFloat(s.borderRadius);
+          if (radius) frame.cornerRadius = radius;
         }
-
-        const effects = parseShadows(s.boxShadow);
-        if (effects.length > 0) frame.effects = effects;
 
         parent.appendChild(frame);
         
@@ -145,7 +110,7 @@ figma.ui.onmessage = async (msg) => {
             await drawNode(frame, child, s.x, s.y, depth + 1); 
           }
         }
-      } catch (err) { /* silent catch */ }
+      } catch (err) {}
     }
 
     const viewportCenter = figma.viewport.center;
@@ -153,13 +118,9 @@ figma.ui.onmessage = async (msg) => {
 
     for (const screenId of selectedIds) {
       const screenData = allData[screenId]; 
-      if (!screenData) continue;
+      if (!screenData || !screenData["1080p"]) continue;
 
       const uiData = screenData["1080p"];
-      if (!uiData || !uiData.styles) continue;
-
-      figma.notify(`Importing ${screenData.name || screenId}...`, { timeout: 1000 });
-
       const mainFrame = figma.createFrame();
       mainFrame.name = `${screenData.name || screenId}`;
       mainFrame.resize(uiData.styles.width, uiData.styles.height);
@@ -176,7 +137,5 @@ figma.ui.onmessage = async (msg) => {
       }
       currentX += uiData.styles.width + 500;
     }
-    
-    figma.notify("UI Import complete! 🚀");
   }
 };

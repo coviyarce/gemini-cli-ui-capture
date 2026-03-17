@@ -1,6 +1,7 @@
 /**
  * UI Capture Engine (Atomic Precision & Icon Extraction)
  * --------------------------------------------------------
+ * v3.6: Enhanced Vertical Alignment via Range API
  */
 
 const puppeteer = require('puppeteer');
@@ -73,21 +74,38 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
               height: rect.height,
               textAlign: styles.textAlign,
               display: styles.display,
-              opacity: styles.opacity
+              opacity: styles.opacity,
+              lineHeight: styles.lineHeight,
+              alignItems: styles.alignItems,
+              justifyContent: styles.justifyContent
             },
             children: []
           };
 
-          // Special handling for SVGs (Icons)
           if (node.tag === 'svg') {
             node.svgContent = el.outerHTML;
-            return node; // Don't serialize children of SVGs
+            return node;
           }
 
           if (el.childNodes.length > 0) {
             for (const child of el.childNodes) {
               if (child.nodeType === Node.TEXT_NODE && child.textContent.trim()) {
-                node.children.push({ tag: 'text-node', text: child.textContent.trim(), styles: node.styles });
+                // Precision Range API for Text Nodes
+                const range = document.createRange();
+                range.selectNodeContents(child);
+                const textRect = range.getBoundingClientRect();
+                
+                node.children.push({ 
+                  tag: 'text-node', 
+                  text: child.textContent.trim(), 
+                  styles: {
+                    ...node.styles,
+                    x: textRect.left + window.scrollX,
+                    y: textRect.top + window.scrollY,
+                    width: textRect.width,
+                    height: textRect.height
+                  }
+                });
               } else if (child.nodeType === Node.ELEMENT_NODE) {
                 const childNode = serialize(child);
                 if (childNode) node.children.push(childNode);
@@ -110,6 +128,6 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
   }
 
   fs.writeFileSync(uiDataPath, JSON.stringify(allScreensResults, null, 2));
-  console.log('✅ Atomic Scansion complete.');
+  console.log('✅ Atomic Scansion complete (Alignment Fixed).');
   await browser.close();
 })();
