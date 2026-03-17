@@ -5,6 +5,7 @@
     
     { "category": "Pages", "id": "bulk-search", "name": "Bulk Search", "actions": [{ "type": "click", "text": "Bulk Search" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     { "category": "Pages", "id": "container-selection", "name": "Container Selection", "actions": [{ "type": "click", "text": "Container Selection" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "locations", "name": "Locations", "actions": [{ "type": "click", "text": "Locations" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     
     { "category": "V-Series", "id": "v1-classic", "name": "V1: Classic", "actions": [{ "type": "click", "text": "V1: Classic" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     { "category": "V-Series", "id": "v2-contextual", "name": "V2: Contextual", "actions": [{ "type": "click", "text": "V2: Contextual" }, { "type": "wait", "ms": 500 }], "selector": "body" },
@@ -17,7 +18,7 @@
     { "category": "Pages", "id": "create-container-page", "name": "Add Container", "actions": [{ "type": "click", "text": "Add Container" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     { "category": "Pages", "id": "add-consumables", "name": "Add Consumables", "actions": [{ "type": "click", "text": "Add Consumables" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     
-    { "category": "Pages", "id": "workflows-list", "name": "Workflows List", "actions": [{ "type": "click", "text": "Workflows List" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "workflows", "name": "Workflows", "actions": [{ "type": "click", "text": "Workflows" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     
     { "category": "Master", "id": "master-scan", "name": "Full Project Storyboard", "actions": [{ "type": "click", "text": "Master Scan" }, { "type": "wait", "ms": 1000 }], "selector": "body" }
   ]
