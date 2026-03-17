@@ -1,58 +1,87 @@
-# SuperScan UI Sync Kit (v3.2 - SVG Edition) 🚀
+# SuperScan UI Bridge v4.0 🚀
 
-This repository is a powerful, high-precision engine that "captures" your web application (React, HTML, Vue, etc.) and converts it into perfectly editable **SVG Vectors** directly inside Figma.
+**High-Fidelity UI-to-Figma bridge for AI-driven development.**
 
-Think of it as a "Super Snapshot" that preserves every shadow, gradient, and layout detail as real vector paths.
+SuperScan is a toolkit designed to bridge the gap between local AI development environments and Figma. It allows you to capture live React/Web components from your local server and import them directly into Figma as precise, editable layers.
 
----
-
-## 🌟 What's New in v3.2?
-
-- **SVG Snapshots:** High-fidelity capture using SVG `foreignObject`. It handles complex CSS effects (shadows, filters, specific fonts) much better than the old JSON mapping.
-- **Hybrid Engine:** Captures both pixel-perfect coordinates (JSON) and visual snapshots (SVG).
-- **Simplified Import:** Figma now treats imports as native SVG nodes, making the process faster and more reliable.
+Built for engineers using **Gemini-CLI**, **Claude**, **Cursor**, or any local LLM workflow.
 
 ---
 
-## 📦 1. Installation (The "First Time" Setup)
+## 🌟 Why SuperScan?
 
-1. **Download the Kit:**
+- **Figma Make Continuity:** If you run out of AI tokens in Figma, continue your work locally and sync back to the canvas.
+- **CLI Agnostic:** Works with any AI that can modify your local code.
+- **High Fidelity:** Captures sub-pixel positioning, borders, SVGs, and typography with atomic precision.
+- **No Cost:** Avoid expensive subscriptions for design-to-code syncing.
+
+---
+
+## 🛠 Setup & Installation
+
+1. **Clone the repository:**
    ```bash
-   git clone git@github.com:coviyarce/gemini-cli-ui-capture.git
+   git clone https://github.com/coviyarce/superscan-ui-sync.git
+   cd superscan-ui-sync
    ```
-2. **Go to the Folder & Install:**
+
+2. **Install dependencies:**
    ```bash
-   cd gemini-cli-ui-capture && npm install
+   npm install
    ```
-3. **Create the Storage Folder:**
-   Make sure you have a folder named `superscan` inside your main project (e.g., `polaris-ds/superscan`).
+
+3. **Install the Figma Plugin:**
+   - Open Figma.
+   - Go to `Plugins` > `Development` > `Import plugin from manifest...`.
+   - Select `figma-plugin/manifest.json` from this project.
 
 ---
 
-## 🚀 2. How to Use (Step-by-Step)
+## 🚀 Workflow with Gemini-CLI (MCP)
 
-### Step A: Start your Web App
-Ensure your app is running (e.g., `http://localhost:5173`).
+This project is optimized for a **design-to-code-to-design** loop using Gemini-CLI and the Figma MCP.
 
-### Step B: Run the "Capture"
-```bash
-npm run capture
-```
-*The tool will scan your app and save the SVG blueprints into `polaris-ds/superscan/ui-structure.json`.*
+1. **Modify Code:** Use Gemini-CLI to build or update your components locally.
+2. **Configure Capture:** Update `capture-config.json` with your local server URL and the screens you want to sync.
+   ```json
+   {
+     "baseUrl": "http://localhost:5173",
+     "screens": [{ "id": "my-comp", "name": "My Component", "selector": "#root" }]
+   }
+   ```
+3. **Capture & Sync:**
+   ```bash
+   npm run sync
+   ```
+4. **Import in Figma:** Open the SuperScan plugin in Figma and click the pre-loaded workspace data.
 
-### Step C: Sync with Figma Plugin
-```bash
-npm run update-plugin
-```
+---
+
+## 🤖 Usage with Other CLIs / Manual Flow
+
+If you are using Claude Pro, Cursor, or other tools:
+
+1. **Generate UI Structure:** Run `npm run capture` to generate the `assets/ui-structure.json` file.
+2. **Manual Load:** 
+   - Open the SuperScan plugin in Figma.
+   - Drag and drop your `ui-structure.json` file into the plugin's upload zone.
+3. **Select & Import:** Choose the sections you want to bring to the canvas.
 
 ---
 
-## 🎨 3. Import into Figma
+## 📐 Configuration (`capture-config.json`)
 
-1. **Open Figma** and load the plugin via **manifest.json**.
-2. **Select your Scan File:** Use the file browser to pick the `ui-structure.json` from your `superscan/` folder.
-3. **Choose your Screens:** Select the pages you want.
-4. **Import:** The plugin will now prioritize the **SVG Snapshot** for maximum fidelity. Done! 🚀
+| Field | Description |
+| :--- | :--- |
+| `baseUrl` | The URL of your local development server (e.g., Vite, Webpack). |
+| `screens` | Array of objects defining what to capture. |
+| `screens.actions` | Optional: steps to take (click, wait) before capturing (e.g., opening a modal). |
+| `selector` | The CSS selector of the element to capture (defaults to `body`). |
 
 ---
-*Built with ❤️ by [Luis Covilla (Coviyarce)](https://github.com/coviyarce)*
+
+## 📄 License & Credits
+
+Built with ❤️ by **Luis Covilla ([Coviyarce](https://github.com/coviyarce))**.
+
+Licensed under the [MIT License](LICENSE).

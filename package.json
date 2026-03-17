@@ -1,14 +1,22 @@
 {
-  "name": "gemini-cli-ui-capture",
+  "name": "superscan-ui-sync",
   "version": "1.0.0",
-  "description": "High-fidelity UI capture toolkit for Figma via Gemini CLI",
-  "main": "index.js",
+  "description": "High-fidelity UI-to-Figma bridge for AI-driven development. Import code-generated UI into Figma canvases using Gemini-CLI or any local LLM.",
+  "main": "figma-plugin/code.js",
   "scripts": {
     "capture": "node scripts/capture-to-figma.cjs",
     "update-plugin": "node scripts/update-plugin.cjs",
     "sync": "node scripts/capture-to-figma.cjs && node scripts/update-plugin.cjs"
   },
-  "author": "coviyarce",
+  "keywords": [
+    "figma",
+    "gemini-cli",
+    "mcp",
+    "ui-capture",
+    "design-to-code",
+    "ai-tools"
+  ],
+  "author": "Luis Covilla (Coviyarce)",
   "license": "MIT",
   "dependencies": {
     "puppeteer": "^24.3.0"

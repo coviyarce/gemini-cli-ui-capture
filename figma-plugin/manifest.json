@@ -1,11 +1,17 @@
 {
-  "name": "SuperScan UI Sync Kit v3.5",
-  "id": "superscan-ui-sync-v35",
+  "name": "SuperScan UI Bridge v4.0",
+  "id": "superscan-ui-bridge",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
   "editorType": [
     "figma",
     "figjam"
-  ]
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://*.google.com",
+      "https://*.figma.com"
+    ]
+  }
 }
