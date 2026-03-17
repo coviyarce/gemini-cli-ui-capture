@@ -1,5 +1,5 @@
 /**
- * UI Capture Engine (Atomic Precision & SVG Snapshot)
+ * UI Capture Engine (Atomic Precision & Icon Extraction)
  * --------------------------------------------------------
  */
 
@@ -22,38 +22,28 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
   try {
     for (const screen of config.screens) {
-      console.log(`🚀 Precision Scanning: ${screen.name}...`);
+      console.log(`🚀 Atomic Scan: ${screen.name}...`);
       
-      // Navigate to base
       await page.goto(config.baseUrl, { waitUntil: 'networkidle2' });
-      await wait(2000);
+      await wait(1500);
 
-      // Perform actions to reach screen
       if (screen.actions) {
         for (const action of screen.actions) {
           if (action.type === 'click') {
             try {
               const xpath = `//span[contains(text(), '${action.text}')] | //div[contains(text(), '${action.text}')] | //p[contains(text(), '${action.text}')] | //a[contains(text(), '${action.text}')]`;
               const elements = await page.$$(`::-p-xpath(${xpath})`);
-              
               if (elements.length > 0) {
                 await elements[0].click();
-                await wait(1500); 
-              } else {
-                console.warn(`   ⚠️ Warning: Could not find element with text "${action.text}"`);
+                await wait(1000); 
               }
-            } catch (clickErr) {
-              console.error(`   ❌ Click Error for "${action.text}":`, clickErr.message);
-            }
+            } catch (e) {}
           } else if (action.type === 'wait') {
             await wait(action.ms);
           }
         }
       }
 
-      await wait(1000);
-
-      // 1. Capture coordinates & metadata (Legacy JSON fallback)
       const screenData = await page.evaluate((sel) => {
         const root = document.querySelector(sel) || document.body;
         
@@ -88,6 +78,12 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
             children: []
           };
 
+          // Special handling for SVGs (Icons)
+          if (node.tag === 'svg') {
+            node.svgContent = el.outerHTML;
+            return node; // Don't serialize children of SVGs
+          }
+
           if (el.childNodes.length > 0) {
             for (const child of el.childNodes) {
               if (child.nodeType === Node.TEXT_NODE && child.textContent.trim()) {
@@ -103,31 +99,10 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
         return serialize(root);
       }, screen.selector);
 
-      // 2. Capture high-fidelity SVG Snapshot
-      // We use a simplified version of dom-to-svg logic
-      const svgSnapshot = await page.evaluate(async (sel) => {
-        const el = document.querySelector(sel) || document.body;
-        const rect = el.getBoundingClientRect();
-        
-        // Use SVG foreignObject to wrap the HTML
-        // Note: This is a robust way to get Figma-compatible SVG from DOM
-        const svg = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
-            <foreignObject width="100%" height="100%">
-              <div xmlns="http://www.w3.org/1999/xhtml" style="margin:0;padding:0;font-family:sans-serif;">
-                ${el.innerHTML}
-              </div>
-            </foreignObject>
-          </svg>
-        `;
-        return svg;
-      }, screen.selector);
-
       allScreensResults[screen.id] = {
         name: screen.name,
         category: screen.category,
-        "1080p": screenData,
-        "svg": svgSnapshot
+        "1080p": screenData
       };
     }
   } catch (err) {
@@ -135,6 +110,6 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
   }
 
   fs.writeFileSync(uiDataPath, JSON.stringify(allScreensResults, null, 2));
-  console.log('✅ Precision Scansion complete (JSON + SVG).');
+  console.log('✅ Atomic Scansion complete.');
   await browser.close();
 })();
