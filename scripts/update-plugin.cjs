@@ -2,39 +2,46 @@ const fs = require('fs');
 const path = require('path');
 
 // ─── Configuration Paths ───
-// Reading from the new superscan folder in polaris-ds
 const uiDataPath = path.join(__dirname, '../../polaris-ds/superscan/ui-structure.json');
 const templateCodePath = path.join(__dirname, '../figma-plugin/code.template.js');
-const templateUIPath = path.join(__dirname, '../figma-plugin/ui.html');
-const codePath = path.join(__dirname, '../figma-plugin/code.js');
+const templateUIPath = path.join(__dirname, '../figma-plugin/ui.template.html');
+const finalCodePath = path.join(__dirname, '../figma-plugin/code.js');
 const finalUIPath = path.join(__dirname, '../figma-plugin/ui.html');
 
 async function syncPlugin() {
-    console.log('🔄 Starting Plugin Synchronization (v3.5 Fix)...');
+    console.log('🔄 Starting Plugin Synchronization (v3.7 Total Refresh)...');
 
     try {
-        // 1. Read the latest UI Blueprint
         if (!fs.existsSync(uiDataPath)) {
             console.error('❌ Data file not found at:', uiDataPath);
-            console.log('   ↳ Please run capture-to-figma.cjs first.');
             return;
         }
-        const uiData = fs.readFileSync(uiDataPath, 'utf8');
+        const uiDataRaw = fs.readFileSync(uiDataPath, 'utf8');
+        const uiDataObject = JSON.parse(uiDataRaw);
+        
+        console.log('   ↳ Found screens:', Object.keys(uiDataObject));
 
-        // 2. Inject data into the Plugin Logic (code.js)
-        let codeContent = fs.readFileSync(templateCodePath, 'utf8');
-        const dataString = 'JSON.parse(`' + uiData.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$') + '`)';
-        codeContent = codeContent.replace('const allData = msg.dataOverride || __CAPTURED_DATA__;', 'const allData = msg.dataOverride || ' + dataString + ';');
-        fs.writeFileSync(codePath, codeContent);
-        console.log('   ↳ Logic (code.js) fixed and updated.');
+        // Format for injection into backticks
+        const escapedData = uiDataRaw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        const dataInjection = 'JSON.parse(`' + escapedData + '`)';
 
-        // 3. Inject data into the Plugin UI (ui.html)
-        let uiHtml = fs.readFileSync(templateUIPath, 'utf8');
-        uiHtml = uiHtml.replace('let allData = __CAPTURED_DATA__;', 'let allData = ' + dataString + ';');
-        fs.writeFileSync(finalUIPath, uiHtml);
-        console.log('   ↳ Interface (ui.html) fixed and updated.');
+        // 1. Inject into Logic (code.js)
+        if (fs.existsSync(templateCodePath)) {
+            let codeContent = fs.readFileSync(templateCodePath, 'utf8');
+            codeContent = codeContent.replace(/__CAPTURED_DATA__/g, dataInjection);
+            fs.writeFileSync(finalCodePath, codeContent);
+            console.log('   ↳ Logic (code.js) fully refreshed from template.');
+        }
 
-        console.log('✅ Plugin UI & Logic synced! The Figma plugin is ready to use. 🚀');
+        // 2. Inject into UI (ui.html)
+        if (fs.existsSync(templateUIPath)) {
+            let uiHtml = fs.readFileSync(templateUIPath, 'utf8');
+            uiHtml = uiHtml.replace(/__CAPTURED_DATA__/g, dataInjection);
+            fs.writeFileSync(finalUIPath, uiHtml);
+            console.log('   ↳ Interface (ui.html) fully refreshed from template.');
+        }
+
+        console.log('✅ Plugin sync complete. Please restart the plugin in Figma. 🚀');
 
     } catch (error) {
         console.error('❌ Synchronization failed:', error);

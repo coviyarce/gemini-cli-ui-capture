@@ -1,11 +1,24 @@
 {
   "baseUrl": "http://localhost:5173",
   "screens": [
+    { "category": "Pages", "id": "main-project", "name": "Main Project - Workflow Canvas", "actions": [{ "type": "click", "text": "Main Project" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    
     { "category": "Pages", "id": "bulk-search", "name": "Bulk Search", "actions": [{ "type": "click", "text": "Bulk Search" }, { "type": "wait", "ms": 500 }], "selector": "body" },
     { "category": "Pages", "id": "container-selection", "name": "Container Selection", "actions": [{ "type": "click", "text": "Container Selection" }, { "type": "wait", "ms": 500 }], "selector": "body" },
-    { "category": "Pages", "id": "container-detail", "name": "Container Detail Card", "actions": [{ "type": "click", "text": "Container Detail Card" }, { "type": "wait", "ms": 500 }], "selector": "body" },
-    { "category": "Pages", "id": "create-container", "name": "Create Container", "actions": [{ "type": "click", "text": "Create Container" }, { "type": "wait", "ms": 500 }], "selector": "body" },
-    { "category": "Pages", "id": "workflows", "name": "Workflows", "actions": [{ "type": "click", "text": "Workflows" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    
+    { "category": "V-Series", "id": "v1-classic", "name": "V1: Classic", "actions": [{ "type": "click", "text": "V1: Classic" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "V-Series", "id": "v2-contextual", "name": "V2: Contextual", "actions": [{ "type": "click", "text": "V2: Contextual" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "V-Series", "id": "v3-direct", "name": "V3: Direct", "actions": [{ "type": "click", "text": "V3: Direct" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "V-Series", "id": "v4-smart", "name": "V4: Smart Mapping", "actions": [{ "type": "click", "text": "V4: Smart Mapping" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "V-Series", "id": "v5-dnd", "name": "V5: DnD Mapping", "actions": [{ "type": "click", "text": "V5: DnD Mapping" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    
+    { "category": "Components", "id": "detail-card", "name": "Container Detail Card", "actions": [{ "type": "click", "text": "Container Detail Card" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    
+    { "category": "Pages", "id": "create-container-page", "name": "Add Container", "actions": [{ "type": "click", "text": "Add Container" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    { "category": "Pages", "id": "add-consumables", "name": "Add Consumables", "actions": [{ "type": "click", "text": "Add Consumables" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    
+    { "category": "Pages", "id": "workflows-list", "name": "Workflows List", "actions": [{ "type": "click", "text": "Workflows List" }, { "type": "wait", "ms": 500 }], "selector": "body" },
+    
     { "category": "Master", "id": "master-scan", "name": "Full Project Storyboard", "actions": [{ "type": "click", "text": "Master Scan" }, { "type": "wait", "ms": 1000 }], "selector": "body" }
   ]
 }
