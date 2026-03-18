@@ -1,5 +1,5 @@
 /**
- * SuperScan Logic Engine v4.1 (High-Fidelity Hybrid)
+ * SuperScan Logic Engine v4.2 (High-Fidelity Detail Recovery)
  */
 
 figma.showUI(__html__, { width: 380, height: 560 });
@@ -38,7 +38,7 @@ figma.ui.onmessage = async (msg) => {
     }
 
     async function drawNode(parent, data, offX, offY, depth = 0) {
-      if (depth > 100) return;
+      if (depth > 150) return;
       try {
         const s = data.styles;
         if (!s || s.display === 'none' || s.opacity === '0') return;
@@ -90,18 +90,50 @@ figma.ui.onmessage = async (msg) => {
           frame.fills = [];
         }
 
-        // Borders
-        const borderW = parseFloat(s.borderWidth || s.borderBottomWidth);
-        if (borderW > 0) {
-          const bColor = parseColor(s.borderColor || s.borderBottomColor);
-          frame.strokes = [{ type: 'SOLID', color: { r: bColor.r, g: bColor.g, b: bColor.b }, opacity: bColor.a }];
-          frame.strokeWeight = borderW;
-          frame.strokeAlign = "INSIDE";
-        }
+        // --- BORDERS & LINES (Detail Recovery) ---
+        const drawBorder = (side, value) => {
+          if (!value || value.includes('none') || value.startsWith('0px')) return;
+          const match = value.match(/(\d+\.?\d*)px\s+\w+\s+(.*)/);
+          if (!match) return;
+          
+          const weight = parseFloat(match[1]);
+          const color = parseColor(match[2]);
+          
+          const line = figma.createLine();
+          line.strokes = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
+          line.strokeWeight = weight;
+          
+          if (side === 'top') {
+            line.resize(s.width, 0);
+            line.x = 0; line.y = 0;
+          } else if (side === 'bottom') {
+            line.resize(s.width, 0);
+            line.x = 0; line.y = s.height;
+          } else if (side === 'left') {
+            line.rotation = 90;
+            line.resize(s.height, 0);
+            line.x = 0; line.y = 0;
+          } else if (side === 'right') {
+            line.rotation = 90;
+            line.resize(s.height, 0);
+            line.x = s.width; line.y = 0;
+          }
+          frame.appendChild(line);
+        };
+
+        drawBorder('top', s.borderTop);
+        drawBorder('bottom', s.borderBottom);
+        drawBorder('left', s.borderLeft);
+        drawBorder('right', s.borderRight);
 
         if (s.borderRadius && s.borderRadius !== '0px') {
           const radius = parseFloat(s.borderRadius);
           if (radius) frame.cornerRadius = radius;
+        }
+
+        // Shadows
+        if (s.boxShadow && s.boxShadow !== 'none') {
+          // Simple shadow parsing can be complex, skipping for stability but noted
         }
 
         parent.appendChild(frame);
@@ -125,7 +157,7 @@ figma.ui.onmessage = async (msg) => {
 
       const uiData = screenData["1080p"];
       const mainFrame = figma.createFrame();
-      mainFrame.name = `${screenData.name || screenId} (SuperScan v4.1)`;
+      mainFrame.name = `${screenData.name || screenId} (Atomic v4.2)`;
       mainFrame.resize(uiData.styles.width, uiData.styles.height);
       mainFrame.x = currentX;
       mainFrame.y = viewportCenter.y - (uiData.styles.height / 2);

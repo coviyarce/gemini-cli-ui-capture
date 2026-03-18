@@ -50,7 +50,8 @@ describe('SuperScan Data Structure Validation', () => {
   test('should verify the existence and validity of ui-structure.json', () => {
     const fs = require('fs');
     const path = require('path');
-    const dataPath = path.join(__dirname, '../assets/ui-structure.json');
+    // Primary data source is now in polaris-ds
+    const dataPath = path.join(__dirname, '../../polaris-ds/superscan/ui-structure.json');
     
     expect(fs.existsSync(dataPath)).toBe(true);
     
