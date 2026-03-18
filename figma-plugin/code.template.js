@@ -1,144 +1,146 @@
 /**
- * Figma Plugin Code Template (Precision JSON Rendering + SVG Fallback)
- * ---------------------------------------------------
+ * SuperScan Logic Engine v4.1 (High-Fidelity Hybrid)
  */
 
-figma.showUI(__html__, { width: 320, height: 520 });
+figma.showUI(__html__, { width: 380, height: 560 });
 
 figma.ui.onmessage = async (msg) => {
   if (msg.type === 'import') {
     const allData = msg.dataOverride || __CAPTURED_DATA__;
     const selectedIds = msg.ids;
-    
-    console.log('🚀 Plugin received import request for IDs:', selectedIds);
+
+    if (!allData) return;
+
+    function parseColor(cssColor) {
+      if (!cssColor || cssColor === 'transparent' || cssColor === 'rgba(0, 0, 0, 0)') return { r: 0, g: 0, b: 0, a: 0 };
+      const match = cssColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+      if (!match) return { r: 1, g: 1, b: 1, a: 1 };
+      return { 
+        r: parseInt(match[1]) / 255, 
+        g: parseInt(match[2]) / 255, 
+        b: parseInt(match[3]) / 255, 
+        a: match[4] ? parseFloat(match[4]) : 1 
+      };
+    }
+
+    async function loadFont(family, weight) {
+      const familyClean = family ? family.split(',')[0].replace(/"/g, '') : "Inter";
+      const style = weight >= 700 ? "Bold" : (weight >= 500 ? "Medium" : "Regular");
+      try {
+        await figma.loadFontAsync({ family: familyClean, style });
+        return { family: familyClean, style };
+      } catch (e) {
+        try {
+          await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+          return { family: "Inter", style: "Regular" };
+        } catch (e2) { return null; }
+      }
+    }
+
+    async function drawNode(parent, data, offX, offY, depth = 0) {
+      if (depth > 100) return;
+      try {
+        const s = data.styles;
+        if (!s || s.display === 'none' || s.opacity === '0') return;
+
+        // --- 1. TEXT NODE ---
+        if (data.tag === 'text-node') {
+          const textNode = figma.createText();
+          const font = await loadFont(s.fontFamily, parseInt(s.fontWeight));
+          if (font) {
+            textNode.fontName = font;
+            textNode.characters = data.text || "";
+            textNode.fontSize = Math.max(1, parseFloat(s.fontSize) || 12);
+            const color = parseColor(s.color);
+            textNode.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
+            
+            textNode.x = s.x - offX; 
+            textNode.y = s.y - offY;
+            textNode.resize(Math.max(1, s.width), Math.max(1, s.height));
+            parent.appendChild(textNode);
+          }
+          return;
+        }
+
+        // --- 2. SVG (Icons) ---
+        if (data.tag === 'svg' && data.svgContent) {
+          try {
+            const svgNode = figma.createNodeFromSvg(data.svgContent);
+            svgNode.x = s.x - offX;
+            svgNode.y = s.y - offY;
+            const scale = Math.min(s.width / svgNode.width, s.height / svgNode.height);
+            if (scale > 0 && scale < 10) svgNode.rescale(scale);
+            parent.appendChild(svgNode);
+            return;
+          } catch (e) {}
+        }
+
+        // --- 3. FRAME / DIV ---
+        const frame = figma.createFrame();
+        frame.name = data.tag || "div";
+        frame.resize(Math.max(0.1, s.width), Math.max(0.1, s.height));
+        frame.x = s.x - offX; 
+        frame.y = s.y - offY;
+        frame.clipsContent = false;
+
+        const bgColor = parseColor(s.backgroundColor);
+        if (bgColor.a > 0) {
+          frame.fills = [{ type: 'SOLID', color: { r: bgColor.r, g: bgColor.g, b: bgColor.b }, opacity: bgColor.a }];
+        } else {
+          frame.fills = [];
+        }
+
+        // Borders
+        const borderW = parseFloat(s.borderWidth || s.borderBottomWidth);
+        if (borderW > 0) {
+          const bColor = parseColor(s.borderColor || s.borderBottomColor);
+          frame.strokes = [{ type: 'SOLID', color: { r: bColor.r, g: bColor.g, b: bColor.b }, opacity: bColor.a }];
+          frame.strokeWeight = borderW;
+          frame.strokeAlign = "INSIDE";
+        }
+
+        if (s.borderRadius && s.borderRadius !== '0px') {
+          const radius = parseFloat(s.borderRadius);
+          if (radius) frame.cornerRadius = radius;
+        }
+
+        parent.appendChild(frame);
+        
+        if (data.children && data.children.length > 0) {
+          for (const child of data.children) { 
+            await drawNode(frame, child, s.x, s.y, depth + 1); 
+          }
+        }
+      } catch (err) {}
+    }
 
     const viewportCenter = figma.viewport.center;
     let currentX = viewportCenter.x;
 
-    // Helper functions for JSON rendering
-    function parseColor(cssColor) {
-      if (!cssColor) return { r: 1, g: 1, b: 1, a: 0 };
-      const match = cssColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-      if (!match) return { r: 1, g: 1, b: 1, a: 1 };
-      return {
-        r: parseInt(match[1]) / 255,
-        g: parseInt(match[2]) / 255,
-        b: parseInt(match[3]) / 255,
-        a: match[4] ? parseFloat(match[4]) : 1
-      };
-    }
-
-    async function loadFonts() {
-      await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-      await figma.loadFontAsync({ family: "Inter", style: "Medium" });
-      await figma.loadFontAsync({ family: "Inter", style: "Bold" });
-      await figma.loadFontAsync({ family: "Helvetica Neue", style: "Regular" });
-      await figma.loadFontAsync({ family: "Helvetica Neue", style: "Medium" });
-      await figma.loadFontAsync({ family: "Helvetica Neue", style: "Bold" });
-    }
-
-    function drawNode(parent, data, offX, offY) {
-      if (!data || !data.styles) return;
-      
-      const { r, g, b, a } = parseColor(data.styles.backgroundColor);
-      let node;
-      
-      // Handle Text Nodes
-      if (data.tag === 'text-node' || (data.children && data.children.length === 1 && data.children[0].tag === 'text-node')) {
-        const textContent = data.tag === 'text-node' ? data.text : data.children[0].text;
-        node = figma.createText();
-        
-        let style = "Regular";
-        if (data.styles.fontWeight >= 700) style = "Bold";
-        else if (data.styles.fontWeight >= 500) style = "Medium";
-        
-        node.fontName = { family: "Inter", style: style };
-        node.characters = textContent || "";
-        node.fontSize = parseFloat(data.styles.fontSize) || 12;
-        
-        const { r: tr, g: tg, b: tb, a: ta } = parseColor(data.styles.color);
-        node.fills = [{ type: 'SOLID', color: { r: tr, g: tg, b: tb }, opacity: ta }];
-      } else {
-        node = figma.createFrame();
-        node.fills = a > 0 ? [{ type: 'SOLID', color: { r, g, b }, opacity: a }] : [];
-        const radius = parseFloat(data.styles.borderRadius);
-        if (radius) node.cornerRadius = radius;
-
-        if (data.styles.borderBottom && data.styles.borderBottom !== '0px none rgb(0, 0, 0)') {
-          const bMatch = data.styles.borderBottom.match(/(\d+)px\s+\w+\s+(.*)/);
-          if (bMatch) {
-            const bWidth = parseInt(bMatch[1]);
-            const { r: br, g: bg, b: bb } = parseColor(bMatch[2]);
-            node.strokes = [{ type: 'SOLID', color: { r: br, g: bg, b: bb } }];
-            node.strokeWeight = bWidth;
-          }
-        }
-      }
-      
-      node.name = data.tag || "div";
-      node.resize(Math.max(1, data.styles.width), Math.max(1, data.styles.height));
-      node.x = data.styles.x - offX;
-      node.y = data.styles.y - offY;
-      parent.appendChild(node);
-      
-      if (data.children && node.type === 'FRAME') {
-        data.children.forEach(child => {
-          if (child.tag !== 'text-node') {
-             drawNode(node, child, data.styles.x, data.styles.y);
-          }
-        });
-      }
-    }
-
-    await loadFonts();
-
     for (const screenId of selectedIds) {
       const screenData = allData[screenId]; 
-      if (!screenData) continue;
+      if (!screenData || !screenData["1080p"]) continue;
 
-      figma.notify(`Importing ${screenData.name || screenId}...`, { timeout: 1000 });
+      figma.notify(`🚀 Precision Import: ${screenData.name || screenId}...`);
 
-      // ─── SVG ATTEMPT ───
-      let svgImportSuccess = false;
-      if (screenData.svg) {
-        try {
-          const svgNode = figma.createNodeFromSvg(screenData.svg);
-          svgNode.name = `${screenData.name || screenId} (SVG Snapshot)`;
-          svgNode.x = currentX;
-          svgNode.y = viewportCenter.y - (svgNode.height / 2);
-          figma.currentPage.appendChild(svgNode);
-          svgImportSuccess = true;
-          console.log('✅ SVG Snapshot imported successfully');
-        } catch (e) {
-          console.warn('⚠️ SVG Snapshot failed, falling back to JSON Precision Renderer:', e);
-        }
-      }
-
-      // ─── JSON FALLBACK (OR PRIMARY IF SVG FAILED) ───
-      // We always render the JSON version next to it if it failed, 
-      // or if you want both for comparison. For now, we only fallback if SVG fails.
-      if (!svgImportSuccess) {
-        const uiData = screenData["1080p"];
-        if (uiData && uiData.styles) {
-          const mainFrame = figma.createFrame();
-          mainFrame.name = `${screenData.name || screenId} (Atomic Precision)`;
-          mainFrame.resize(uiData.styles.width, uiData.styles.height);
-          mainFrame.x = currentX;
-          mainFrame.y = viewportCenter.y - (uiData.styles.height / 2);
-          
-          const bg = parseColor(uiData.styles.backgroundColor);
-          mainFrame.fills = [{ type: 'SOLID', color: { r: bg.r, g: bg.g, b: bg.b }, opacity: bg.a }];
-          
-          if (uiData.children) {
-            uiData.children.forEach(child => drawNode(mainFrame, child, uiData.styles.x, uiData.styles.y));
-          }
-        }
-      }
+      const uiData = screenData["1080p"];
+      const mainFrame = figma.createFrame();
+      mainFrame.name = `${screenData.name || screenId} (SuperScan v4.1)`;
+      mainFrame.resize(uiData.styles.width, uiData.styles.height);
+      mainFrame.x = currentX;
+      mainFrame.y = viewportCenter.y - (uiData.styles.height / 2);
       
-      const width = screenData["1080p"] ? screenData["1080p"].styles.width : 1920;
-      currentX += width + 500;
+      const bg = parseColor(uiData.styles.backgroundColor);
+      mainFrame.fills = [{ type: 'SOLID', color: { r: bg.r, g: bg.g, b: bg.b }, opacity: bg.a || 1 }];
+      
+      if (uiData.children) {
+        for (const child of uiData.children) { 
+          await drawNode(mainFrame, child, uiData.styles.x, uiData.styles.y); 
+        }
+      }
+      currentX += uiData.styles.width + 500;
     }
     
-    figma.notify("UI Import complete! 🚀");
+    figma.notify("✅ Atomic Import complete!");
   }
 };
