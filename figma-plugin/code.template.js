@@ -1,5 +1,5 @@
 /**
- * SuperScan Logic Engine v4.2 (High-Fidelity Detail Recovery)
+ * SuperScan Logic Engine v4.3 (Native Strokes & Text Precision)
  */
 
 figma.showUI(__html__, { width: 380, height: 560 });
@@ -24,7 +24,8 @@ figma.ui.onmessage = async (msg) => {
     }
 
     async function loadFont(family, weight) {
-      const familyClean = family ? family.split(',')[0].replace(/"/g, '') : "Inter";
+      // Prioritize Inter or Helvetica Neue as per project standards
+      const familyClean = family && family.includes('Helvetica') ? "Helvetica Neue" : "Inter";
       const style = weight >= 700 ? "Bold" : (weight >= 500 ? "Medium" : "Regular");
       try {
         await figma.loadFontAsync({ family: familyClean, style });
@@ -38,25 +39,33 @@ figma.ui.onmessage = async (msg) => {
     }
 
     async function drawNode(parent, data, offX, offY, depth = 0) {
-      if (depth > 150) return;
+      if (depth > 200) return;
       try {
         const s = data.styles;
-        if (!s || s.display === 'none' || s.opacity === '0') return;
+        if (!s || s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return;
 
         // --- 1. TEXT NODE ---
         if (data.tag === 'text-node') {
+          if (!data.text || !data.text.trim()) return;
+          
           const textNode = figma.createText();
           const font = await loadFont(s.fontFamily, parseInt(s.fontWeight));
           if (font) {
             textNode.fontName = font;
-            textNode.characters = data.text || "";
+            textNode.characters = data.text.trim();
             textNode.fontSize = Math.max(1, parseFloat(s.fontSize) || 12);
+            
+            // Proportional correction
+            textNode.lineHeight = s.lineHeight !== 'normal' ? { value: parseFloat(s.lineHeight), unit: 'PIXELS' } : { unit: 'AUTO' };
+            
             const color = parseColor(s.color);
             textNode.fills = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
             
             textNode.x = s.x - offX; 
             textNode.y = s.y - offY;
             textNode.resize(Math.max(1, s.width), Math.max(1, s.height));
+            textNode.textAlignHorizontal = s.textAlign?.toUpperCase() || "LEFT";
+            
             parent.appendChild(textNode);
           }
           return;
@@ -83,6 +92,7 @@ figma.ui.onmessage = async (msg) => {
         frame.y = s.y - offY;
         frame.clipsContent = false;
 
+        // Background
         const bgColor = parseColor(s.backgroundColor);
         if (bgColor.a > 0) {
           frame.fills = [{ type: 'SOLID', color: { r: bgColor.r, g: bgColor.g, b: bgColor.b }, opacity: bgColor.a }];
@@ -90,50 +100,34 @@ figma.ui.onmessage = async (msg) => {
           frame.fills = [];
         }
 
-        // --- BORDERS & LINES (Detail Recovery) ---
-        const drawBorder = (side, value) => {
-          if (!value || value.includes('none') || value.startsWith('0px')) return;
-          const match = value.match(/(\d+\.?\d*)px\s+\w+\s+(.*)/);
-          if (!match) return;
-          
-          const weight = parseFloat(match[1]);
-          const color = parseColor(match[2]);
-          
-          const line = figma.createLine();
-          line.strokes = [{ type: 'SOLID', color: { r: color.r, g: color.g, b: color.b }, opacity: color.a }];
-          line.strokeWeight = weight;
-          
-          if (side === 'top') {
-            line.resize(s.width, 0);
-            line.x = 0; line.y = 0;
-          } else if (side === 'bottom') {
-            line.resize(s.width, 0);
-            line.x = 0; line.y = s.height;
-          } else if (side === 'left') {
-            line.rotation = 90;
-            line.resize(s.height, 0);
-            line.x = 0; line.y = 0;
-          } else if (side === 'right') {
-            line.rotation = 90;
-            line.resize(s.height, 0);
-            line.x = s.width; line.y = 0;
-          }
-          frame.appendChild(line);
+        // --- NATIVE BORDERS (Individual Sides) ---
+        const parseBorder = (val) => {
+          if (!val || val.includes('none') || val.startsWith('0px')) return { w: 0, c: { r: 0, g: 0, b: 0, a: 0 } };
+          const m = val.match(/(\d+\.?\d*)px\s+\w+\s+(.*)/);
+          return m ? { w: parseFloat(m[1]), c: parseColor(m[2]) } : { w: 0, c: { r: 0, g: 0, b: 0, a: 0 } };
         };
 
-        drawBorder('top', s.borderTop);
-        drawBorder('bottom', s.borderBottom);
-        drawBorder('left', s.borderLeft);
-        drawBorder('right', s.borderRight);
+        const bt = parseBorder(s.borderTop);
+        const bb = parseBorder(s.borderBottom);
+        const bl = parseBorder(s.borderLeft);
+        const br = parseBorder(s.borderRight);
 
-        if (s.borderRadius && s.borderRadius !== '0px') {
-          const radius = parseFloat(s.borderRadius);
-          if (radius) frame.cornerRadius = radius;
+        // Apply most dominant border as main stroke, then use individual weights
+        const dominant = [bt, bb, bl, br].find(b => b.w > 0) || { w: 0, c: { r: 0, g: 0, b: 0, a: 0 } };
+        if (dominant.w > 0) {
+          frame.strokes = [{ type: 'SOLID', color: { r: dominant.c.r, g: dominant.c.g, b: dominant.c.b }, opacity: dominant.c.a }];
+          frame.strokeWeight = dominant.w;
+          
+          // Use individual stroke weights (Figma API support)
+          frame.strokeTopWeight = bt.w;
+          frame.strokeBottomWeight = bb.w;
+          frame.strokeLeftWeight = bl.w;
+          frame.strokeRightWeight = br.w;
+          frame.strokeAlign = "INSIDE";
         }
 
-        // Shadows
-        if (s.boxShadow && s.boxShadow !== 'none') {
-          // Simple shadow parsing can be complex, skipping for stability but noted
+        if (s.borderRadius && s.borderRadius !== '0px') {
+          frame.cornerRadius = parseFloat(s.borderRadius) || 0;
         }
 
         parent.appendChild(frame);
@@ -143,7 +137,9 @@ figma.ui.onmessage = async (msg) => {
             await drawNode(frame, child, s.x, s.y, depth + 1); 
           }
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('Error drawing node:', err);
+      }
     }
 
     const viewportCenter = figma.viewport.center;
@@ -153,11 +149,11 @@ figma.ui.onmessage = async (msg) => {
       const screenData = allData[screenId]; 
       if (!screenData || !screenData["1080p"]) continue;
 
-      figma.notify(`🚀 Precision Import: ${screenData.name || screenId}...`);
+      figma.notify(`🚀 Native Precision Import: ${screenData.name || screenId}...`);
 
       const uiData = screenData["1080p"];
       const mainFrame = figma.createFrame();
-      mainFrame.name = `${screenData.name || screenId} (Atomic v4.2)`;
+      mainFrame.name = `${screenData.name || screenId} (SuperScan v4.3)`;
       mainFrame.resize(uiData.styles.width, uiData.styles.height);
       mainFrame.x = currentX;
       mainFrame.y = viewportCenter.y - (uiData.styles.height / 2);
@@ -173,6 +169,6 @@ figma.ui.onmessage = async (msg) => {
       currentX += uiData.styles.width + 500;
     }
     
-    figma.notify("✅ Atomic Import complete!");
+    figma.notify("✅ Professional Import complete!");
   }
 };
