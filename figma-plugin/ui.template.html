@@ -2,94 +2,246 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SuperScan UI Bridge</title>
+  <title>UI Sync Kit Plugin</title>
   <style>
-    :root { --primary: #00b4ed; --bg: #ffffff; --text: #333333; --border: #e2e8f0; }
-    body { font-family: 'Inter', sans-serif; padding: 20px; margin: 0; color: var(--text); background: #fcfcfc; }
-    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-    h2 { font-size: 16px; margin: 0; font-weight: 800; letter-spacing: -0.5px; }
+    :root {
+      --primary: #00b4ed;
+      --bg: #ffffff;
+      --text-main: #333333;
+      --text-muted: #999999;
+      --border: #f0f0f0;
+    }
+    body { 
+      font-family: 'Inter', -apple-system, sans-serif; 
+      padding: 16px; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      margin: 0; 
+      overflow-x: hidden;
+    }
+    h2 { 
+      font-size: 14px; 
+      margin-bottom: 16px; 
+      color: #111; 
+      font-weight: 600; 
+      letter-spacing: -0.01em; 
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     
-    .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 30px 20px;
+    .section-label { 
+      font-size: 10px; 
+      font-weight: 700; 
+      color: #aaa; 
+      text-transform: uppercase; 
+      margin-bottom: 8px; 
+      display: block; 
+    }
+
+    .category-title {
+      font-size: 10px; 
+      font-weight: 700; 
+      color: var(--text-muted); 
+      text-transform: uppercase;
+      letter-spacing: 0.05em; 
+      margin: 20px 0 8px 0;
+    }
+
+    /* Browser/File Picker Styles */
+    .browser-box {
+      background: #f8f9fa;
+      border: 1px dashed #ced4da;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
       text-align: center;
       transition: all 0.2s;
-      background: white;
+    }
+    .browser-box:hover { border-color: var(--primary); background: #f1faff; }
+    .browser-box.has-file { border-style: solid; border-color: #28a745; background: #f4fff6; }
+    
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
       cursor: pointer;
-      margin-bottom: 20px;
     }
-    .drop-zone:hover { border-color: var(--primary); background: #f0faff; }
-    .drop-zone.has-file { border-style: solid; border-color: #10b981; background: #f0fdf4; }
-    
-    .file-info { font-size: 11px; color: #64748b; margin-top: 8px; }
-    .btn-select { font-size: 12px; font-weight: 600; color: var(--primary); text-decoration: underline; }
+    .file-input-wrapper input[type=file] {
+      font-size: 100px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .file-btn {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    .filename-display {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-    .screen-list { max-height: 280px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: white; margin-bottom: 20px; }
-    .category-title { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; padding: 12px 12px 4px; background: #f8fafc; }
-    .screen-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
-    .screen-name { font-size: 11px; font-weight: 500; }
+    .screen-item { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      padding: 8px 0; 
+      border-bottom: 1px solid var(--border);
+    }
+    .screen-item:last-child { border-bottom: none; }
     
-    .switch { position: relative; width: 34px; height: 18px; }
+    .screen-name { font-size: 12px; font-weight: 500; }
+    
+    /* Custom Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 32px; height: 18px; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; transition: .3s; border-radius: 18px; }
-    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background: white; transition: .3s; border-radius: 50%; }
-    input:checked + .slider { background: var(--primary); }
-    input:checked + .slider:before { transform: translateX(16px); }
-
-    .actions { position: sticky; bottom: 0; background: #fcfcfc; padding-top: 10px; }
-    button#import-btn { 
-      width: 100%; padding: 14px; background: #0f172a; color: white; border: none; border-radius: 10px; 
-      font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #e0e0e0; transition: .3s; border-radius: 18px;
     }
-    button#import-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+    .slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
+      background-color: white; transition: .3s; border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(14px); }
+
+    /* Resolution Picker */
+    .resolution-picker {
+      display: flex; 
+      gap: 12px; 
+      margin-bottom: 24px; 
+      padding: 12px; 
+      background: #f8f9fa; 
+      border-radius: 8px;
+    }
+    .res-option { 
+      display: flex; 
+      align-items: center; 
+      gap: 6px; 
+      font-size: 11px; 
+      font-weight: 600; 
+      cursor: pointer; 
+    }
+
+    /* Actions & Footer */
+    .actions { 
+      margin-top: 24px; 
+      position: sticky; 
+      bottom: 0; 
+      background: var(--bg); 
+      padding-top: 10px; 
+      border-top: 1px solid var(--border);
+    }
+    button#import-btn { 
+      width: 100%; 
+      padding: 12px; 
+      background: #111; 
+      color: white; 
+      border: none;
+      border-radius: 8px; 
+      font-size: 12px; 
+      font-weight: 600; 
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button#import-btn:disabled { background: #ccc; cursor: not-allowed; }
+    button#import-btn:hover:not(:disabled) { background: #333; }
     
-    #loading { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 100; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
-    input[type="file"] { display: none; }
-    
-    .footer { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 24px; padding-bottom: 10px; }
-    .footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+    .footer { 
+      font-size: 10px; 
+      color: #aaa; 
+      text-align: center; 
+      margin-top: 20px; 
+      font-weight: 400; 
+      padding-bottom: 16px; 
+      line-height: 1.4;
+    }
+    .footer a { color: var(--primary); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    #loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.8);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
-  <div id="loading">Processing UI Data...</div>
+  <div id="loading-overlay">Scanning JSON...</div>
 
-  <div class="header">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-    <h2>SuperScan UI Bridge</h2>
-  </div>
-
-  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-picker').click()">
-    <span class="btn-select">Click to load ui-structure.json</span>
-    <div class="file-info" id="file-name">No file selected</div>
-    <input type="file" id="file-picker" accept=".json">
-  </div>
-
-  <div id="screen-list-container" style="display: none;">
-    <div class="screen-list" id="screen-list"></div>
-    <div class="actions">
-      <button id="import-btn" disabled>Import Selected to Figma</button>
+  <h2>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    UI Sync Kit v3.5
+  </h2>
+  
+  <span class="section-label">1. Browse SuperScan Files</span>
+  <div class="browser-box" id="drop-zone">
+    <div class="file-input-wrapper">
+      <span class="file-btn">Click to select ui-structure.json</span>
+      <input type="file" id="file-picker" accept=".json">
     </div>
+    <span class="filename-display" id="file-name">From: polaris-ds/superscan</span>
   </div>
 
+  <span class="section-label">2. Select Resolution</span>
+  <div class="resolution-picker">
+    <label class="res-option"><input type="checkbox" id="res-1080p" checked> 1080p</label>
+    <label class="res-option"><input type="checkbox" id="res-720p"> 720p</label>
+  </div>
+
+  <span class="section-label">3. Select Screens to Import</span>
+  <div id="screen-list"></div>
+
+  <div class="actions">
+    <button id="import-btn" disabled>Import Selected</button>
+  </div>
+  
   <div class="footer">
-    SuperScan v4.0 • Built by <a href="https://github.com/coviyarce" target="_blank">Luis Covilla (Coviyarce)</a>
+    Atomic Precision v3.5<br>
+    Built by <a href="https://github.com/coviyarce" target="_blank">Luis Covilla (Coviyarce)</a>
   </div>
 
   <script>
-    let currentData = null;
-    const filePicker = document.getElementById('file-picker');
+    // Injected by update-plugin.cjs as a fallback/default
+    let allData = __CAPTURED_DATA__;
     const screenList = document.getElementById('screen-list');
     const importBtn = document.getElementById('import-btn');
-    const container = document.getElementById('screen-list-container');
+    const filePicker = document.getElementById('file-picker');
+    const fileNameDisplay = document.getElementById('file-name');
     const dropZone = document.getElementById('drop-zone');
+    const overlay = document.getElementById('loading-overlay');
 
+    /**
+     * Renders the list of screens from the loaded data
+     */
     function renderScreens(data) {
       screenList.innerHTML = '';
+      if (!data || Object.keys(data).length === 0) return;
+      
       const categories = {};
+
       Object.keys(data).forEach(id => {
         const screen = data[id];
-        const cat = screen.category || 'Screens';
+        const cat = screen.category || 'Other';
         if (!categories[cat]) categories[cat] = [];
         categories[cat].push({ id, ...screen });
       });
@@ -97,13 +249,14 @@
       Object.keys(categories).forEach(cat => {
         const catDiv = document.createElement('div');
         catDiv.innerHTML = `<div class="category-title">${cat}</div>`;
+        
         categories[cat].forEach(screen => {
           const item = document.createElement('div');
           item.className = 'screen-item';
           item.innerHTML = `
-            <span class="screen-name">${screen.name || screen.id}</span>
+            <span class="screen-name">${screen.name}</span>
             <label class="switch">
-              <input type="checkbox" class="screen-cb" data-id="${screen.id}">
+              <input type="checkbox" class="screen-checkbox" data-id="${screen.id}">
               <span class="slider"></span>
             </label>
           `;
@@ -112,56 +265,63 @@
         screenList.appendChild(catDiv);
       });
 
-      container.style.display = 'block';
-      
-      document.querySelectorAll('.screen-cb').forEach(cb => {
-        cb.onchange = () => {
-          importBtn.disabled = !Array.from(document.querySelectorAll('.screen-cb:checked')).length;
-        };
+      // Update button state on change
+      const checkboxes = document.querySelectorAll('.screen-checkbox');
+      checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+          const anyChecked = Array.from(checkboxes).some(c => c.checked);
+          importBtn.disabled = !anyChecked;
+        });
       });
     }
 
-    filePicker.onchange = (e) => {
+    // Initial render with injected data
+    if (allData && Object.keys(allData).length > 0) {
+      renderScreens(allData);
+    }
+
+    // ─── File Handling ───
+    filePicker.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      
-      document.getElementById('loading').style.display = 'flex';
+
+      overlay.style.display = 'flex';
+      fileNameDisplay.textContent = file.name;
+      dropZone.classList.add('has-file');
+
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          currentData = JSON.parse(event.target.result);
-          renderScreens(currentData);
-          document.getElementById('file-name').textContent = file.name;
-          dropZone.classList.add('has-file');
+          const newData = JSON.parse(event.target.result);
+          allData = newData;
+          renderScreens(allData);
+          overlay.style.display = 'none';
         } catch (err) {
-          alert('Invalid JSON file.');
+          alert('Error parsing JSON file. Make sure it is a valid UI Blueprint.');
+          overlay.style.display = 'none';
         }
-        document.getElementById('loading').style.display = 'none';
       };
       reader.readAsText(file);
-    };
+    });
 
+    // ─── Import Logic ───
     importBtn.onclick = () => {
-      const selectedIds = Array.from(document.querySelectorAll('.screen-cb:checked'))
+      const selectedIds = Array.from(document.querySelectorAll('.screen-checkbox:checked'))
         .map(cb => cb.getAttribute('data-id'));
       
+      const res = [];
+      if (document.getElementById('res-1080p').checked) res.push('1080p');
+      if (document.getElementById('res-720p').checked) res.push('720p');
+
       parent.postMessage({ 
         pluginMessage: { 
           type: 'import', 
           ids: selectedIds, 
-          dataOverride: currentData 
+          resolutions: res,
+          dataOverride: allData 
         } 
       }, '*');
     };
-
-    // Auto-load injected data if present
-    const injectedData = __CAPTURED_DATA__;
-    if (injectedData && Object.keys(injectedData).length > 0) {
-      currentData = injectedData;
-      renderScreens(currentData);
-      document.getElementById('file-name').textContent = 'Workspace Context Loaded';
-      dropZone.classList.add('has-file');
-    }
   </script>
 </body>
 </html>
