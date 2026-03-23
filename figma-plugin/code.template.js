@@ -1,5 +1,5 @@
 /**
- * SuperScan Logic Engine v4.3 (Native Strokes & Text Precision)
+ * SuperScan Logic Engine v4.4 (Professional Fidelity & MUI Optimized)
  */
 
 figma.showUI(__html__, { width: 380, height: 560 });
@@ -24,7 +24,6 @@ figma.ui.onmessage = async (msg) => {
     }
 
     async function loadFont(family, weight) {
-      // Prioritize Inter or Helvetica Neue as per project standards
       const familyClean = family && family.includes('Helvetica') ? "Helvetica Neue" : "Inter";
       const style = weight >= 700 ? "Bold" : (weight >= 500 ? "Medium" : "Regular");
       try {
@@ -54,8 +53,6 @@ figma.ui.onmessage = async (msg) => {
             textNode.fontName = font;
             textNode.characters = data.text.trim();
             textNode.fontSize = Math.max(1, parseFloat(s.fontSize) || 12);
-            
-            // Proportional correction
             textNode.lineHeight = s.lineHeight !== 'normal' ? { value: parseFloat(s.lineHeight), unit: 'PIXELS' } : { unit: 'AUTO' };
             
             const color = parseColor(s.color);
@@ -64,7 +61,13 @@ figma.ui.onmessage = async (msg) => {
             textNode.x = s.x - offX; 
             textNode.y = s.y - offY;
             textNode.resize(Math.max(1, s.width), Math.max(1, s.height));
-            textNode.textAlignHorizontal = s.textAlign?.toUpperCase() || "LEFT";
+
+            const alignMap = { "start": "LEFT", "left": "LEFT", "center": "CENTER", "end": "RIGHT", "right": "RIGHT", "justify": "JUSTIFIED" };
+            const alignValue = alignMap[s.textAlign ? s.textAlign.toLowerCase() : "left"] || "LEFT";
+            try { 
+              textNode.textAlignHorizontal = alignValue; 
+              textNode.textAlignVertical = "CENTER"; 
+            } catch(e) {}
             
             parent.appendChild(textNode);
           }
@@ -74,17 +77,50 @@ figma.ui.onmessage = async (msg) => {
         // --- 2. SVG (Icons) ---
         if (data.tag === 'svg' && data.svgContent) {
           try {
-            const svgNode = figma.createNodeFromSvg(data.svgContent);
-            svgNode.x = s.x - offX;
-            svgNode.y = s.y - offY;
+            let content = data.svgContent;
+            
+            // Minimal non-destructive fix
+            if (!content.includes('xmlns=')) content = content.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+            
+            const svgNode = figma.createNodeFromSvg(content);
+            
+            // Proportional scaling based on the parsed node size
             const scale = Math.min(s.width / svgNode.width, s.height / svgNode.height);
-            if (scale > 0 && scale < 10) svgNode.rescale(scale);
+            if (scale > 0 && isFinite(scale)) {
+              svgNode.rescale(scale);
+            }
+
+            // Center within captured box
+            svgNode.x = (s.x - offX) + (s.width - svgNode.width) / 2;
+            svgNode.y = (s.y - offY) + (s.height - svgNode.height) / 2;
+
+            // CRITICAL: Smart recoloring ONLY for actual vector paths
+            const iconColor = parseColor(s.color);
+            const recolor = (node) => {
+              if (node.type === 'VECTOR' || node.type === 'BOOLEAN_OPERATION') {
+                 if (node.fills && node.fills.length > 0) {
+                    node.fills = [{ type: 'SOLID', color: { r: iconColor.r, g: iconColor.g, b: iconColor.b }, opacity: iconColor.a }];
+                 }
+                 if (node.strokes && node.strokes.length > 0) {
+                    node.strokes = [{ type: 'SOLID', color: { r: iconColor.r, g: iconColor.g, b: iconColor.b }, opacity: iconColor.a }];
+                 }
+              }
+              if ("children" in node) node.children.forEach(recolor);
+            };
+            recolor(svgNode);
+            
             parent.appendChild(svgNode);
             return;
-          } catch (e) {}
+          } catch (e) {
+            console.error("SVG Import failed:", e);
+            return;
+          }
         }
 
         // --- 3. FRAME / DIV ---
+        // Ignore very small decorative elements or MUI ripples
+        if (s.width < 2 || s.height < 2) return;
+
         const frame = figma.createFrame();
         frame.name = data.tag || "div";
         frame.resize(Math.max(0.1, s.width), Math.max(0.1, s.height));
@@ -92,7 +128,6 @@ figma.ui.onmessage = async (msg) => {
         frame.y = s.y - offY;
         frame.clipsContent = false;
 
-        // Background
         const bgColor = parseColor(s.backgroundColor);
         if (bgColor.a > 0) {
           frame.fills = [{ type: 'SOLID', color: { r: bgColor.r, g: bgColor.g, b: bgColor.b }, opacity: bgColor.a }];
@@ -100,7 +135,6 @@ figma.ui.onmessage = async (msg) => {
           frame.fills = [];
         }
 
-        // --- NATIVE BORDERS (Individual Sides) ---
         const parseBorder = (val) => {
           if (!val || val.includes('none') || val.startsWith('0px')) return { w: 0, c: { r: 0, g: 0, b: 0, a: 0 } };
           const m = val.match(/(\d+\.?\d*)px\s+\w+\s+(.*)/);
@@ -112,13 +146,10 @@ figma.ui.onmessage = async (msg) => {
         const bl = parseBorder(s.borderLeft);
         const br = parseBorder(s.borderRight);
 
-        // Apply most dominant border as main stroke, then use individual weights
         const dominant = [bt, bb, bl, br].find(b => b.w > 0) || { w: 0, c: { r: 0, g: 0, b: 0, a: 0 } };
         if (dominant.w > 0) {
           frame.strokes = [{ type: 'SOLID', color: { r: dominant.c.r, g: dominant.c.g, b: dominant.c.b }, opacity: dominant.c.a }];
           frame.strokeWeight = dominant.w;
-          
-          // Use individual stroke weights (Figma API support)
           frame.strokeTopWeight = bt.w;
           frame.strokeBottomWeight = bb.w;
           frame.strokeLeftWeight = bl.w;
@@ -149,11 +180,11 @@ figma.ui.onmessage = async (msg) => {
       const screenData = allData[screenId]; 
       if (!screenData || !screenData["1080p"]) continue;
 
-      figma.notify(`🚀 Native Precision Import: ${screenData.name || screenId}...`);
+      figma.notify(`🚀 Pro Fidelity Import: ${screenData.name || screenId}...`);
 
       const uiData = screenData["1080p"];
       const mainFrame = figma.createFrame();
-      mainFrame.name = `${screenData.name || screenId} (SuperScan v4.3)`;
+      mainFrame.name = `${screenData.name || screenId}`;
       mainFrame.resize(uiData.styles.width, uiData.styles.height);
       mainFrame.x = currentX;
       mainFrame.y = viewportCenter.y - (uiData.styles.height / 2);

@@ -82,6 +82,8 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
               flexDirection: styles.flexDirection,
               alignItems: styles.alignItems,
               justifyContent: styles.justifyContent,
+              textAlign: styles.textAlign,
+              color: styles.color,
               opacity: styles.opacity,
               zIndex: styles.zIndex === 'auto' ? 0 : parseInt(styles.zIndex)
             },
@@ -89,7 +91,10 @@ const wait = (ms) => new Promise(r => setTimeout(r, ms));
           };
 
           if (node.tag === 'svg') {
-            node.svgContent = el.outerHTML;
+            // Clean up SVG for Figma (remove scripts, ensure namespaces)
+            let svgMarkup = el.outerHTML;
+            if (!svgMarkup.includes('xmlns=')) svgMarkup = svgMarkup.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+            node.svgContent = svgMarkup;
             return node;
           }
 

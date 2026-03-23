@@ -3,7 +3,7 @@ const path = require('path');
 
 // ── Configuration Paths (Relative to project root) ──
 const rootDir = path.join(__dirname, '..');
-const uiDataPath = path.join(rootDir, '../polaris-ds/superscan/ui-structure.json');
+const uiDataPath = path.join(rootDir, 'assets/ui-structure.json');
 const templateCodePath = path.join(rootDir, 'figma-plugin/code.template.js');
 const templateUIPath = path.join(rootDir, 'figma-plugin/ui.template.html');
 const finalCodePath = path.join(rootDir, 'figma-plugin/code.js');
