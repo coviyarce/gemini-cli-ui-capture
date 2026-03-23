@@ -1,24 +1,51 @@
 {
   "baseUrl": "http://localhost:5173",
-  "screens": [
-    { 
-      "category": "Marketing", 
-      "id": "landing-page", 
-      "name": "Landing Page Example", 
-      "actions": [
-        { "type": "wait", "ms": 1000 }
-      ], 
-      "selector": "body" 
-    },
-    { 
-      "category": "App Screens", 
-      "id": "dashboard", 
-      "name": "User Dashboard", 
-      "actions": [
-        { "type": "click", "text": "Dashboard" },
-        { "type": "wait", "ms": 500 }
-      ], 
-      "selector": "main" 
+  "settings": {
+    "horizontalGap": 150,
+    "verticalGap": 300
+  },
+  "flows": [
+    {
+      "id": "lab-consumables-full-storyboard",
+      "name": "Lab Consumables Flow",
+      "category": "Storyboard Mode",
+      "steps": [
+        {
+          "id": "1-initial-modal",
+          "name": "1. Modal Default State",
+          "actions": [
+            { "type": "click", "text": "Add Consumables" },
+            { "type": "wait", "ms": 800 }
+          ],
+          "selector": "body"
+        },
+        {
+          "id": "2-populated-list",
+          "name": "2. Populated List (6 Items)",
+          "actions": [
+            { "type": "click", "text": "Add Lab Consumable" },
+            { "type": "wait", "ms": 400 },
+            { "type": "click", "text": "Add Lab Consumable" },
+            { "type": "wait", "ms": 400 },
+            { "type": "click", "text": "Add Lab Consumable" },
+            { "type": "wait", "ms": 400 },
+            { "type": "click", "text": "Add Lab Consumable" },
+            { "type": "wait", "ms": 400 },
+            { "type": "click", "text": "Add Lab Consumable" },
+            { "type": "wait", "ms": 800 }
+          ],
+          "selector": "body"
+        },
+        {
+          "id": "3-tabular-review",
+          "name": "3. Tabular Review Mode",
+          "actions": [
+            { "type": "click", "text": "NEXT" },
+            { "type": "wait", "ms": 1200 }
+          ],
+          "selector": "body"
+        }
+      ]
     }
   ]
 }

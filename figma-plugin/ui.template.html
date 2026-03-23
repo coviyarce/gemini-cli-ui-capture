@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>UI Sync Kit Plugin</title>
+  <title>SuperScan Deep-Scan UI</title>
   <style>
     :root {
       --primary: #00b4ed;
@@ -91,16 +91,18 @@
       text-overflow: ellipsis;
     }
 
-    .screen-item { 
+    .flow-item { 
       display: flex; 
       align-items: center; 
       justify-content: space-between;
-      padding: 8px 0; 
+      padding: 10px 0; 
       border-bottom: 1px solid var(--border);
     }
-    .screen-item:last-child { border-bottom: none; }
+    .flow-item:last-child { border-bottom: none; }
     
-    .screen-name { font-size: 12px; font-weight: 500; }
+    .flow-info { display: flex; flex-direction: column; gap: 4px; }
+    .flow-name { font-size: 12px; font-weight: 600; color: #111; }
+    .flow-meta { font-size: 10px; font-weight: 500; color: var(--primary); }
     
     /* Custom Toggle Switch */
     .switch { position: relative; display: inline-block; width: 32px; height: 18px; }
@@ -116,24 +118,6 @@
     }
     input:checked + .slider { background-color: var(--primary); }
     input:checked + .slider:before { transform: translateX(14px); }
-
-    /* Resolution Picker */
-    .resolution-picker {
-      display: flex; 
-      gap: 12px; 
-      margin-bottom: 24px; 
-      padding: 12px; 
-      background: #f8f9fa; 
-      border-radius: 8px;
-    }
-    .res-option { 
-      display: flex; 
-      align-items: center; 
-      gap: 6px; 
-      font-size: 11px; 
-      font-weight: 600; 
-      cursor: pointer; 
-    }
 
     /* Actions & Footer */
     .actions { 
@@ -186,87 +170,86 @@
   </style>
 </head>
 <body>
-  <div id="loading-overlay">Scanning JSON...</div>
+  <div id="loading-overlay">Scanning Storyboards...</div>
 
   <h2>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-    UI Sync Kit v3.5
+    SuperScan Storyboard v4.5
   </h2>
   
-  <span class="section-label">1. Browse SuperScan Files</span>
+  <span class="section-label">1. Browse Deep-Scan Files</span>
   <div class="browser-box" id="drop-zone">
     <div class="file-input-wrapper">
       <span class="file-btn">Click to select ui-structure.json</span>
       <input type="file" id="file-picker" accept=".json">
     </div>
-    <span class="filename-display" id="file-name">From: polaris-ds/superscan</span>
+    <span class="filename-display" id="file-name">From: superscan local env</span>
   </div>
 
-  <span class="section-label">2. Select Resolution</span>
-  <div class="resolution-picker">
-    <label class="res-option"><input type="checkbox" id="res-1080p" checked> 1080p</label>
-    <label class="res-option"><input type="checkbox" id="res-720p"> 720p</label>
-  </div>
-
-  <span class="section-label">3. Select Screens to Import</span>
-  <div id="screen-list"></div>
+  <span class="section-label">2. Select Storyboards to Import</span>
+  <div id="flow-list"></div>
 
   <div class="actions">
-    <button id="import-btn" disabled>Import Selected</button>
+    <button id="import-btn" disabled>Import Selected Storyboards</button>
   </div>
   
   <div class="footer">
-    Atomic Precision v3.5<br>
+    Deep-Scan Architecture v4.5<br>
     Built by <a href="https://github.com/coviyarce" target="_blank">Luis Covilla (Coviyarce)</a>
   </div>
 
   <script>
     // Injected by update-plugin.cjs as a fallback/default
     let allData = __CAPTURED_DATA__;
-    const screenList = document.getElementById('screen-list');
+    const flowList = document.getElementById('flow-list');
     const importBtn = document.getElementById('import-btn');
     const filePicker = document.getElementById('file-picker');
     const fileNameDisplay = document.getElementById('file-name');
     const dropZone = document.getElementById('drop-zone');
     const overlay = document.getElementById('loading-overlay');
 
-    /**
-     * Renders the list of screens from the loaded data
-     */
-    function renderScreens(data) {
-      screenList.innerHTML = '';
-      if (!data || Object.keys(data).length === 0) return;
+    function renderFlows(data) {
+      flowList.innerHTML = '';
+      if (!data) return;
+      
+      const flows = data.flows || data; // Handle both deep-scan and legacy
+      if (Object.keys(flows).length === 0) return;
       
       const categories = {};
 
-      Object.keys(data).forEach(id => {
-        const screen = data[id];
-        const cat = screen.category || 'Other';
+      Object.keys(flows).forEach(id => {
+        if (id === 'version' || id === 'settings') return;
+        const flow = flows[id];
+        const cat = flow.category || 'Other';
         if (!categories[cat]) categories[cat] = [];
-        categories[cat].push({ id, ...screen });
+        categories[cat].push({ id, ...flow });
       });
 
       Object.keys(categories).forEach(cat => {
         const catDiv = document.createElement('div');
         catDiv.innerHTML = `<div class="category-title">${cat}</div>`;
         
-        categories[cat].forEach(screen => {
+        categories[cat].forEach(flow => {
+          const stepCount = flow.steps ? Object.keys(flow.steps).length : 1;
           const item = document.createElement('div');
-          item.className = 'screen-item';
+          item.className = 'flow-item';
           item.innerHTML = `
-            <span class="screen-name">${screen.name}</span>
+            <div class="flow-info">
+              <span class="flow-name">${flow.name || flow.id}</span>
+              <span class="flow-meta">${stepCount} step${stepCount > 1 ? 's' : ''} in sequence</span>
+            </div>
             <label class="switch">
-              <input type="checkbox" class="screen-checkbox" data-id="${screen.id}">
+              <input type="checkbox" class="flow-checkbox" data-id="${flow.id}">
               <span class="slider"></span>
             </label>
           `;
           catDiv.appendChild(item);
         });
-        screenList.appendChild(catDiv);
+        flowList.appendChild(catDiv);
       });
 
       // Update button state on change
-      const checkboxes = document.querySelectorAll('.screen-checkbox');
+      const checkboxes = document.querySelectorAll('.flow-checkbox');
       checkboxes.forEach(cb => {
         cb.addEventListener('change', () => {
           const anyChecked = Array.from(checkboxes).some(c => c.checked);
@@ -276,8 +259,8 @@
     }
 
     // Initial render with injected data
-    if (allData && Object.keys(allData).length > 0) {
-      renderScreens(allData);
+    if (allData) {
+      renderFlows(allData);
     }
 
     // ─── File Handling ───
@@ -294,7 +277,7 @@
         try {
           const newData = JSON.parse(event.target.result);
           allData = newData;
-          renderScreens(allData);
+          renderFlows(allData);
           overlay.style.display = 'none';
         } catch (err) {
           alert('Error parsing JSON file. Make sure it is a valid UI Blueprint.');
@@ -306,18 +289,13 @@
 
     // ─── Import Logic ───
     importBtn.onclick = () => {
-      const selectedIds = Array.from(document.querySelectorAll('.screen-checkbox:checked'))
+      const selectedIds = Array.from(document.querySelectorAll('.flow-checkbox:checked'))
         .map(cb => cb.getAttribute('data-id'));
       
-      const res = [];
-      if (document.getElementById('res-1080p').checked) res.push('1080p');
-      if (document.getElementById('res-720p').checked) res.push('720p');
-
       parent.postMessage({ 
         pluginMessage: { 
           type: 'import', 
           ids: selectedIds, 
-          resolutions: res,
           dataOverride: allData 
         } 
       }, '*');

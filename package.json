@@ -6,7 +6,8 @@
   "scripts": {
     "capture": "node scripts/capture-to-figma.cjs",
     "update-plugin": "node scripts/update-plugin.cjs",
-    "sync": "node scripts/capture-to-figma.cjs && node scripts/update-plugin.cjs"
+    "sync": "node scripts/capture-to-figma.cjs && node scripts/update-plugin.cjs",
+    "test": "vitest run"
   },
   "keywords": [
     "figma",
@@ -20,5 +21,9 @@
   "license": "MIT",
   "dependencies": {
     "puppeteer": "^24.3.0"
+  },
+  "devDependencies": {
+    "jsdom": "^29.0.1",
+    "vitest": "^4.1.1"
   }
 }

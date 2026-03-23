@@ -1,24 +1,35 @@
-# SuperScan UI Bridge — Gemini CLI Rules (v4.4 Optimized)
+# 💎 SuperScan Engineering Manifesto (v4.5 - Deep Scan)
 
-This project is a high-fidelity UI-to-Figma bridge. Use these rules to maintain the architectural integrity of the capture and plugin logic.
+Este manifiesto es la fuente de verdad absoluta para el mantenimiento del puente UI-to-Figma. Cualquier IA o desarrollador debe validar su código contra estas reglas.
 
-## 💎 High-Fidelity Logic Rules
+---
 
-- **SVG Rescaling:** ALWAYS use proportional rescaling for SVGs. Never use `resize()` on an SVG node as it causes stretching. Use `rescale()` based on `Math.min(targetWidth / nativeWidth, targetHeight / nativeHeight)`.
-- **MUI "Square Fix":** When recoloring SVGs, ONLY apply `fills` or `strokes` to nodes of type `VECTOR` or `BOOLEAN_OPERATION`. Never apply styles to `FRAME` or `GROUP` nodes to avoid creating solid squares from invisible containers.
-- **viewBox Priority:** Always prioritize the SVG `viewBox` for defining the natural proportions of an icon. If a `viewBox` is present, use it to set the base `width` and `height` before importing to Figma.
-- **Text Alignment:** 
-    - Map CSS `start`/`left` to `LEFT`, `center` to `CENTER`, and `end`/`right` to `RIGHT`.
-    - Always set `textAlignVertical: "CENTER"` for UI components like buttons and inputs.
-- **Noise Filtering:** Ignore any elements with `width < 2px` or `height < 2px` to prevent cluttering the Figma canvas with ripple effects or decorative artifacts.
+## 🚀 Reglas de Oro de Fidelidad Visual
 
-## 🛠 Development Standards
+### 1. El Motor SVG (Zero-Square Policy)
+*   **Filtro de Nodos:** El coloreado recursivo **NUNCA** debe aplicarse a `FRAME` o `GROUP`. Solo a `VECTOR`, `BOOLEAN_OPERATION`, `STAR`, `LINE`, `ELLIPSE`, `RECTANGLE`.
+*   **Preservación de Transparencia:** Solo aplicar `fills` o `strokes` si el nodo ya tiene una propiedad de relleno/trazo definida. No forzar colores en áreas vacías.
+*   **viewBox-First Parsing:** El `viewBox` manda. Si un SVG tiene `viewBox`, el `width` y `height` iniciales de la cadena XML deben coincidir con él para evitar distorsiones de coordenadas en el parser de Figma.
 
-- **ES5+ Compatibility:** DO NOT use modern JavaScript syntax like Optional Chaining (`?.`) or Nullish Coalescing (`??`) in `figma-plugin/code.template.js`. The Figma environment may not support them without transpilation.
-- **Capture Consistency:** Ensure `capture-config.json` is updated with the correct `baseUrl` (typically `http://localhost:5173` for Vite) before running a capture.
-- **Sync Workflow:** After any change to `code.template.js` or `ui-structure.json`, always run `npm run update-plugin` to synchronize the final `code.js` used by Figma.
+### 2. Proporción y Centrado (MUI Optimized)
+*   **Escalado Proporcional:** Prohibido el uso de `resize()` en SVGs. Usar `rescale(Math.min(scaleX, scaleY))`.
+*   **Centrado Matemático:** Los iconos deben centrarse en su caja de CSS usando: `(containerSize - nodeSize) / 2`.
+*   **Noise Filtering:** Ignorar elementos menores a 2px. Son "basura visual" generada por efectos de ripple o sombras de MUI.
 
-## 🚀 Release Policy
+### 3. Tipografía y Alineación
+*   **Verticality:** Forzar `textAlignVertical: "CENTER"` en todos los textos de botones e inputs.
+*   **Logical Mapping:** Mapear `start`➔`LEFT`, `end`➔`RIGHT`.
+*   **Font Fallback:** Priorizar "Helvetica Neue" para Polaris DS, con fallback a "Inter".
 
-- **Version 4.0+:** All new features must adhere to the **Professional Fidelity Manifest** documented in `README.md`.
-- **Pushing Changes:** Only push to `main` after verifying the visual fidelity of the import in Figma.
+---
+
+## 🎬 Reglas de Storyboard (Deep Scan)
+*   **Horizontal Gap (150px):** Espaciado entre pasos (`steps`) de un mismo flujo.
+*   **Vertical Gap (300px):** Espaciado entre diferentes flujos (`flows`).
+*   **Context Persistence:** El navegador no debe reiniciarse entre pasos para mantener estados de modales o formularios abiertos.
+
+---
+
+## 🛠 Estándares de Código
+*   **ES5 Compatibility:** Prohibido el uso de `?.` (Optional Chaining) o `??` (Nullish Coalescing) dentro de `code.template.js`.
+*   **Auto-Validation:** Antes de cada release, se deben correr los tests unitarios de `ui-capture/test`.
